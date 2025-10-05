@@ -56,6 +56,10 @@ const cube_indices = new Uint16Array([
   0, 4, 7,   0, 7, 3,
 ]);
 
+const cube_colors = new Float32Array([
+  1,0,0,  0,1,0,  0,0,1,  1,1,0,  1,0,1,  0,1,1,  1,1,0,  1,0,1,
+]);
+
 const sphere = function (u_steps, v_steps, r) {
   let vertices = [];
   let indices = [];
@@ -93,14 +97,11 @@ const sphere = function (u_steps, v_steps, r) {
 
 const sphere_colors = function (indices_length) {
   let colors = [];
-  let r = 0.5;
-  let g = 1.0;
-  let b = 1.0;
   for (let i = 0; i < indices_length; i++) {
-  
+    let r = Math.random();
+    let g = Math.random();
+    let b = Math.random();
     colors.push(r, g, b);
   }
-
-  col_arr = new Float32Array(colors);
-  return col_arr;
-}
+  return new Float32Array(colors);
+};

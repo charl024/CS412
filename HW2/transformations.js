@@ -81,3 +81,22 @@ function multiplyMat4(a, b) {
     }
     return r;
 }
+
+// scales a matrix
+function mat4Scale(mat, scale) {
+  const [sx, sy, sz] = scale;
+  const result = [...mat];
+  result[0] *= sx;
+  result[1] *= sx;
+  result[2] *= sx;
+  result[3] *= sx;
+  result[4] *= sy;
+  result[5] *= sy;
+  result[6] *= sy;
+  result[7] *= sy;
+  result[8] *= sz;
+  result[9] *= sz;
+  result[10] *= sz;
+  result[11] *= sz;
+  return result;
+}

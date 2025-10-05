@@ -45,8 +45,15 @@ Press F12 to see the console for debugging.</p>
       </div>
     </div>
     <div>
-      <canvas id="glcanvas" width="400" height="400"></canvas>
-    </div>
+  <canvas id="glcanvas" width="400" height="400"></canvas>
+  <div id="shapeButtons" style="text-align: center; margin-top: 10px;">
+    <button id="cubeBtn">Cube</button>
+    <button id="pyramidBtn">Pyramid</button>
+    <button id="sphereBtn">Sphere</button>
+    <button id="deleteBtn" style="color: #f55;">Delete</button>
+    <button id="clearBtn" style="color: #faa;">Clear All</button>
+  </div>
+</div>
   </div>
 
   <!-- Vertex shader -->
@@ -58,15 +65,52 @@ uniform float uTime; //time in sec
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 uniform mat4 uModelTransformationMatrix;
+uniform vec3 uMotionSet;
+uniform float uMotionChange;
 
 out vec3 vColor;
 
-void main() {
-  float dx = sin(uTime);
-  vec3 new_pos = vec3(aPosition.x + dx, aPosition.y, aPosition.z);
+mat4 rotationY(float cx, float sx) {
+  mat4 roty = mat4(
+    cx, 0.0, -sx, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    sx, 0.0,  cx, 0.0,
+    0.0, 0.0, 0.0, 1.0
+  );
 
-  gl_Position = uProjectionMatrix * uModelViewMatrix * uModelTransformationMatrix * vec4(new_pos,1.0);
-  vColor = aColor;
+  return roty;
+}
+
+mat4 shear(float shxy, float shxz, float shyz, float shyx, float shzx, float shzy) {
+  mat4 shear_res = mat4(
+    1.0, shxy, shxz, 0.0,
+    shyx, 1.0,  shyz, 0.0,
+    shzx, shzy,  1.0,  0.0,
+    0.0, 0.0,  0.0,  1.0
+  );
+  return shear_res;
+}
+
+void main() {
+  float angle = uTime;
+  float cx = cos(angle);
+  float sx = sin(angle);
+
+  vec3 offset = sin(uTime) * uMotionChange * uMotionSet;
+  vec3 new_pos = aPosition + offset;
+
+  float scale = abs(sin(uTime)) * 1.4 + 1.0;
+
+  float shxy = sin(uTime * 0.3) * 0.5;
+  float shxz = cos(uTime * 0.5) * 0.3;
+  float shyz = sin(uTime * 0.7) * 0.4;
+  mat4 shear_mat = shear(shxy, shxz, shyz, 0.0, 0.0, 0.0);
+  mat4 rot_mat = rotationY(cx, sx);
+
+  vec4 rotated_pos = rot_mat * shear_mat * vec4(new_pos, scale);
+
+  gl_Position = uProjectionMatrix * uModelViewMatrix * uModelTransformationMatrix * rotated_pos;
+  vColor = sin(aColor) * 0.5 + 0.5;
 }
 </script>
   <!-- Fragment Shader -->
@@ -121,31 +165,84 @@ void main() {
     let program, posLoc, colorLoc, uMVM, uPM, uMTM;
     let vbo, nbo, ibo;
 
-    let u_steps = 20; 
-    let v_steps = 20;
+    let currentShapes = [];
+
+    let u_steps = 100; 
+    let v_steps = 100;
     let r = 1;
+
+    // obtain sphere data
     const {sphere_vertices, sphere_indices} = sphere(u_steps, v_steps, 1);
-    let sphere_col = sphere_colors(sphere_vertices.length/3);
+    let sphere_col = sphere_colors(sphere_vertices.length/3.0);
+
+    function addShape(shapeType) {
+      let shape = {};
+      
+      switch (shapeType) {
+        case 'cube':
+          shape.vertices = cube_vertices;
+          shape.indices = cube_indices;
+          shape.colors = cube_colors;
+          break;
+        case 'pyramid':
+          shape.vertices = pyramid_vertices;
+          shape.indices = pyramid_indices;
+          shape.colors = pyramid_colors;
+          break;
+        case 'sphere':
+          const {sphere_vertices, sphere_indices} = sphere(u_steps, v_steps, 1);
+          shape.vertices = sphere_vertices;
+          shape.indices = sphere_indices;
+          shape.colors = sphere_colors(sphere_vertices.length / 3);
+          break;
+        default:
+      }
+
+      // spawn shape somewhere, randomly with a random size
+      let s = 0.5 + Math.random() * 1.5;
+      shape.modelMatrix = mat4Identity();
+      shape.modelMatrix = mat4Scale(shape.modelMatrix, [s, s, s]);
+      shape.modelMatrix = mat4Translate(shape.modelMatrix, [
+        (Math.random() - 0.5) * 6,
+        (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 4
+      ]);
+
+      shape.timeOffset = Math.random() * 10.0;
+      shape.timeSpeed = 0.5 + Math.random() * 1.5;
+
+      shape.motionSet = [
+        (Math.random() - 0.5) * 2.0,
+        (Math.random() - 0.5) * 2.0,
+        (Math.random() - 0.5) * 2.0
+      ];
+      shape.motionChange = 0.3 + Math.random() * 0.5;
+
+
+      currentShapes.push(shape)
+    }
+
+    function deleteLastShape() {
+      if (currentShapes.length > 0) {
+        currentShapes.pop();
+      }
+    }
+
 
     // Buffers
-    function initBuffers() {
-      vbo = gl.createBuffer(vertices, indices);  
+    function initBuffers(vertices, indices, colors) {
+      vbo = gl.createBuffer();  
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-      // gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
       gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
       nbo = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, nbo);
-      // gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-      gl.bufferData(gl.ARRAY_BUFFER, sphere_col, gl.STATIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
 
       ibo = gl.createBuffer();
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-      // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, pyramid, gl.STATIC_DRAW);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-
     }
-    initBuffers(sphere_vertices, sphere_indices);
 
     function initShaderProgram() {
       try {
@@ -190,7 +287,6 @@ void main() {
       }
     });
 
-
     let fov = Math.PI / 4, aspect = canvas.width / canvas.height, zNear = 0.1, zFar = 100;
     let f = 1 / Math.tan(fov / 2);
     let proj = new Float32Array([
@@ -213,38 +309,52 @@ void main() {
 
       // init model-view matrix as identity matrix
       let modelViewMatrix = mat4Identity();
-      // init model transformation matrix as identity matrix
-      let modelTransformationMatrix = mat4Identity();
+      // camera translation
+      modelViewMatrix = mat4Translate(modelViewMatrix, [camX, camY, camZ]);
 
       //delta time in ms
       let deltaTime = Date.now() - startTime;
-      // object rotation
-      modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, cubeRotation);
-      // camera translation
-      modelViewMatrix = mat4Translate(modelViewMatrix, [camX, camY, camZ]);
       
-      //set time in seconds
-      gl.uniform1f(timeLoc, deltaTime/1000.0);
       gl.uniformMatrix4fv(uPM, false, proj);
       gl.uniformMatrix4fv(uMVM, false, modelViewMatrix);
-      gl.uniformMatrix4fv(uMTM, false, modelTransformationMatrix);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-      gl.enableVertexAttribArray(posLoc);
-      gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+      for (const shape of currentShapes) {
+        //set time in seconds, apply randomness for each shape
+        gl.uniform1f(timeLoc, (deltaTime/1000.0) * shape.timeSpeed + shape.timeOffset);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, nbo);
-      gl.enableVertexAttribArray(colorLoc);
-      gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+        const motionSetLoc = gl.getUniformLocation(program, "uMotionSet");
+        const motionChangeLoc = gl.getUniformLocation(program, "uMotionChange");
+        gl.uniform3fv(motionSetLoc, shape.motionSet);
+        gl.uniform1f(motionChangeLoc, shape.motionChange);
 
-      // draw the object by the index order
-      // gl.drawElements(gl.TRIANGLES, pyramid.length, gl.UNSIGNED_SHORT, 0);
-      gl.drawElements(gl.TRIANGLES, sphere_indices.length, gl.UNSIGNED_SHORT, 0);
+        modelTransformationMatrix = multiplyMat4(cubeRotation, shape.modelMatrix);
+        gl.uniformMatrix4fv(uMTM, false, modelTransformationMatrix);
+        initBuffers(shape.vertices, shape.indices, shape.colors);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, nbo);
+        gl.enableVertexAttribArray(colorLoc);
+        gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+
+        // draw the object by the index order
+        gl.drawElements(gl.TRIANGLES, shape.indices.length, gl.UNSIGNED_SHORT, 0);
+      }
     }
 
     // Initialize when page loads
     window.onload = function () {
+      document.getElementById("cubeBtn").addEventListener("click", () => addShape("cube"));
+      document.getElementById("pyramidBtn").addEventListener("click", () => addShape("pyramid"));
+      document.getElementById("sphereBtn").addEventListener("click", () => addShape("sphere"));
+      document.getElementById("deleteBtn").addEventListener("click", () => deleteLastShape());
+      document.getElementById("clearBtn").addEventListener("click", () => {
+        currentShapes = [];
+      });
+
       setInterval(render, 30);
     }
 
