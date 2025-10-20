@@ -22,16 +22,38 @@
     canvas {
       border: 1px solid #444;
     }
+
+    .sliderRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .sliderRow label {
+      width: 160px;
+      text-align: right;
+    }
+
+    .sliderRow input[type="range"] {
+      accent-color: rgb(25, 103, 248);
+      width: 200px;
+    }
+
+    .sliderRow span {
+      width: 50px;
+      text-align: left;
+    }
   </style>
 </head>
 
 <body>
-  <h2>Interactive Controls & Geometric Primitives</h2>
+  <h2>Hierarchical Modeling but it's a Spinning Fish</h2>
   <p>Edit vertex and fragment shaders on the left to get the result instantly.<br>
-  Use mouse to drag and rotate the cube. <br>
-Use arrow keys and w, s keys to move the camera.<br>
-Save your code to source file if you want to save it.<br>
-Press F12 to see the console for debugging.</p>
+  Use mouse to drag and rotate the figure. <br>
+Use WASD keys to move the camera, and scroll wheel to zoom in or out.<br>
+Each part of the fish is part of a Tree data structure. The root node here is the main body.
+</p>
 
   <div style="display: flex; gap: 10px; align-items: flex-start;">
     <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -45,7 +67,18 @@ Press F12 to see the console for debugging.</p>
       </div>
     </div>
     <div>
-  <canvas id="glcanvas" width="400" height="400"></canvas>
+  <canvas id="glcanvas" width="600" height="400"></canvas>
+    <div class="sliderRow">
+      <label for="spinrateSlider">Spin me around!</label>
+      <input type="range" id="spinrateSlider" min="-10" max="10" step="0.1" value="0.1">
+      <span id="spinrateValue">0.10</span>
+    </div>
+
+    <div class="sliderRow">
+      <label for="oscillationSlider">Make me swim faster!</label>
+      <input type="range" id="oscillationSlider" min="1" max="10" step="0.1" value="1.0">
+      <span id="oscillationValue">1.00</span>
+    </div>
 </div>
   </div>
 
@@ -58,14 +91,12 @@ uniform float uTime; //time in sec
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 uniform mat4 uModelTransformationMatrix;
-uniform vec3 uMotionSet;
-uniform float uMotionChange;
 
 out vec3 vColor;
 
 void main() {
   gl_Position = uProjectionMatrix * uModelViewMatrix * uModelTransformationMatrix * vec4(aPosition, 1.0);
-  vColor = sin(aColor) * 0.5 + 0.5;
+  vColor = aColor * 0.5 + 0.5;
 }
 </script>
   <script id="fragment-shader" type="x-shader/x-fragment">#version 300 es
@@ -78,6 +109,7 @@ void main() {
   fragColor = vec4(vColor,1.0);
 }
 </script>
+  <script src="shape.js"></script>
   <script src="primitives.js"></script>
   <script src="transformations.js"></script>
   <script src="model.js"></script>

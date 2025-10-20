@@ -69,6 +69,20 @@ function mat4RotateY(matrix, angle) {
     return result;
 }
 
+function mat4RotateZ(matrix, angle) {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    const rotz = new Float32Array([
+        c,  s, 0, 0,
+       -s,  c, 0, 0,
+        0,  0, 1, 0,
+        0,  0, 0, 1
+    ]);
+
+    result = multiplyMat4(matrix, rotz);
+    return result;
+}
+
 // Matrix multiplication
 function multiplyMat4(a, b) {
     let r = new Float32Array(16);
