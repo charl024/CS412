@@ -12,6 +12,7 @@ class Model {
         this.dynamic_angle = 0.0;
         this.dt = 0.0;
         this.spinrate = 0.1;
+        this.spinphase = 0.0;
         this.oscillationrate = 1.0;
 
         this.figure_init(this.num_segments);
@@ -62,6 +63,7 @@ class Model {
         var node = {
             idx: idx,
             transform: transform,
+            itransform: transform,
             wtransform: wtransform,
             children: children,
             shape: shape,
@@ -306,45 +308,47 @@ class Model {
 
     // per-segment functions for updating local transform
     update_base(node) {
-        let change = this.dt * this.spinrate;
-        node.local_angle.x += change;
-        node.transform = mat4RotateY(node.transform, change);
-
+        this.spinphase += this.dt * this.spinrate;
         let amplitude = 0.3;
-        let frequency = 1 * this.oscillationrate;
+        let frequency = 1.0 * this.oscillationrate;
         let y_offset = 0.2 * amplitude * Math.sin(2 * Math.PI * frequency * this.dynamic_angle);
 
-        node.transform = mat4Translate(node.transform, [0, y_offset, 0]);
+        let delta = mat4Identity();
+        
+        delta = mat4RotateY(delta, this.spinphase);
+        delta = mat4Translate(delta, [0, y_offset, 0]);
+
+        node.transform = multiplyMat4(node.itransform, delta);
     }
 
     update_segment1(node) {
-        let change = this.dt * 0.5 * node.rotation_dir.y * this.oscillationrate;
-        node.local_angle.y += change;
-        let bound = Math.PI/16;
-        if (node.local_angle.y > bound || node.local_angle.y < -bound) {
-            node.rotation_dir.y *= -1;
-        }
-        node.transform = mat4RotateY(node.transform, change);
+        let amplitude = Math.PI / 32;
+        let angle = amplitude * Math.sin(2 * Math.PI * this.oscillationrate * this.dynamic_angle);
+
+        let delta = mat4Identity();
+        delta = mat4RotateY(delta, angle);
+        node.transform = multiplyMat4(node.itransform, delta);
     }
 
     update_segment2(node) {
-        let change = this.dt * 0.5 * node.rotation_dir.y * this.oscillationrate;
-        let bound = Math.PI/16;
-        node.local_angle.y += change;
-        if (node.local_angle.y > bound || node.local_angle.y < -bound) {
-            node.rotation_dir.y *= -1;
-        }
-        node.transform = mat4RotateY(node.transform, change);
+        let amplitude = Math.PI / 28;
+        let phase = 0.6;
+        let angle = amplitude * Math.sin(2 * Math.PI * this.oscillationrate * this.dynamic_angle * phase);
+
+        let delta = mat4Identity();
+        delta = mat4RotateY(delta, angle);
+        node.transform = multiplyMat4(node.itransform, delta);
     }
 
     update_tail(node) {
-        let change = this.dt * 1.0 * node.rotation_dir.y * this.oscillationrate;
-        node.local_angle.y += change;
-        let bound = Math.PI/8;
-        if (node.local_angle.y > bound || node.local_angle.y < -bound) {
-            node.rotation_dir.y *= -1;
-        }
-        node.transform = mat4RotateX(node.transform, change);
+        let amplitude = Math.PI / 12;
+        let phase = 1.2;
+
+        let angle = amplitude * Math.sin(2 * Math.PI * this.oscillationrate * this.dynamic_angle * phase);
+
+        let delta = mat4Identity();
+        delta = mat4RotateY(delta, angle);
+        node.transform = multiplyMat4(node.itransform, delta);
     }
 
     // these functions are placeholders, current not in use because I do not need them to animate the fish
