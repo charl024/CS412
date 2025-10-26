@@ -150,7 +150,7 @@ class Model {
         
         switch (idx) {
             case 0:
-                let base_shape = cube_body;
+                let base_shape = cone_body;
                 initial_transform = mat4Translate(initial_transform, [0.0, 0.0, 0.0]);
                 this.figure[idx] = this.create_node(idx, initial_transform, () => this.base_segment(), null, base_shape);
                 break;
@@ -242,7 +242,7 @@ class Model {
 
     // per-segment functions for world transform
     base_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [2.0, 1.0, 1.0]);
+        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
         gl.uniformMatrix4fv(uMTM, false, segment_mat);
     }
 
