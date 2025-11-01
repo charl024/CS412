@@ -32,6 +32,7 @@ vert_editor.value = document.getElementById("vertex-shader").textContent;
 frag_editor.value = document.getElementById("fragment-shader").textContent;
 
 let program, posLoc, colorLoc, uMVM, uPM, uMTM;
+let uKa, uKd, uKs, uAlpha, uLightPos, uViewPos;
 
 function init_shader_program() {
     try {
@@ -43,6 +44,13 @@ function init_shader_program() {
     uMVM = gl.getUniformLocation(program, "uModelViewMatrix");
     uPM = gl.getUniformLocation(program, "uProjectionMatrix");
     uMTM = gl.getUniformLocation(program, "uModelTransformationMatrix");
+
+    uKa = gl.getUniformLocation(program, "uKa");
+    uKd = gl.getUniformLocation(program, "uKd");
+    uKs = gl.getUniformLocation(program, "uKs");
+    uAlpha = gl.getUniformLocation(program, "uAlpha");
+    uLightPos = gl.getUniformLocation(program, "uLightPos");
+    uViewPos = gl.getUniformLocation(program, "uViewPos");
     } catch (e) { console.error(e); }
 }
 
@@ -53,7 +61,7 @@ frag_editor.onkeyup = init_shader_program;
 
 // Mouse and keyboard interactions
 let mouseDown = false, lastX, lastY, rotX = 0.3, rotY = 0;
-let camX = 0, camY = -3, camZ = -20;
+let camX = 0, camY = 0, camZ = -3;
 
 canvas.addEventListener('mousedown', e => {
     mouseDown = true;
@@ -103,29 +111,29 @@ let last_time = Date.now();
 let start_time = Date.now();
 
 // Initialize primitives
-const {vertices: cube_body_vertices, indices: cube_body_indices} = cube_data();
-const cube_body_colors = generate_colors([242.0/255.0, 0.6, 122.0/255.0], cube_body_vertices.length / 3);
-const cube_body = new Shape(gl, program, cube_body_vertices, cube_body_indices, cube_body_colors);
+const {vertices: cube_body_vertices, indices: cube_body_indices, normals: cube_body_normals} = cube_data();
+const cube_body_colors = generate_colors([0.5,0.5,0.5], cube_body_vertices.length / 3);
+const cube_body = new Shape(gl, program, cube_body_vertices, cube_body_indices, cube_body_colors, cube_body_normals);
 
-const {vertices: pyramid_fin_vertices, indices: pyramid_fin_indices} = pyramid_data();
+const {vertices: pyramid_fin_vertices, indices: pyramid_fin_indices, normals: pyramid_fin_normals} = pyramid_data();
 const pyramid_fin_colors = generate_colors([0.5, 0.0, 0.5], pyramid_fin_vertices.length / 3);
-const pyramid_fin = new Shape(gl, program, pyramid_fin_vertices, pyramid_fin_indices, pyramid_fin_colors);
+const pyramid_fin = new Shape(gl, program, pyramid_fin_vertices, pyramid_fin_indices, pyramid_fin_colors, pyramid_fin_normals);
 
-const {vertices: cone_body_vertices, indices: cone_body_indices} = cone_data(30, 30, 1.0, 2.0);
+const {vertices: cone_body_vertices, indices: cone_body_indices, normals: cone_body_normals} = cone_data(30, 30, 1.0, 2.0);
 const cone_body_colors = generate_colors([242.0/255.0, 0.7, 122.0/255.0], cone_body_vertices.length / 3);
-const cone_body = new Shape(gl, program, cone_body_vertices, cone_body_indices, cone_body_colors);
+const cone_body = new Shape(gl, program, cone_body_vertices, cone_body_indices, cone_body_colors, cone_body_normals);
 
-const {vertices: cylinder_body_vertices, indices: cylinder_body_indices} = cylinder_data(30, 30, 1.0, 2.0);
+const {vertices: cylinder_body_vertices, indices: cylinder_body_indices, normals: cylinder_body_normals} = cylinder_data(30, 30, 1.0, 2.0);
 const cylinder_body_colors = generate_colors([242.0/255.0, 0.7, 122.0/255.0], cylinder_body_vertices.length / 3);
-const cylinder_body = new Shape(gl, program, cylinder_body_vertices, cylinder_body_indices, cylinder_body_colors);
+const cylinder_body = new Shape(gl, program, cylinder_body_vertices, cylinder_body_indices, cylinder_body_colors, cylinder_body_normals);
 
-const {vertices: sphere_head_vertices, indices: sphere_head_indices} = sphere_data(30, 30, 1.0);
+const {vertices: sphere_head_vertices, indices: sphere_head_indices, normals: sphere_head_normals} = sphere_data(100, 100, 0.5);
 const sphere_head_colors = generate_colors([242.0/255.0, 0.5, 122.0/255.0], sphere_head_vertices.length / 3);
-const sphere_head = new Shape(gl, program, sphere_head_vertices, sphere_head_indices, sphere_head_colors);
+const sphere_head = new Shape(gl, program, sphere_head_vertices, sphere_head_indices, sphere_head_colors, sphere_head_normals);
 
-const {vertices: sphere_eye_vertices, indices: sphere_eye_indices} = sphere_data(30, 30, 1.0);
+const {vertices: sphere_eye_vertices, indices: sphere_eye_indices, normals: sphere_eye_normals} = sphere_data(10, 30, 1.0);
 const sphere_eye_colors = generate_colors([0.0, 0.0, 0.0], sphere_eye_vertices.length / 3);
-const sphere_eye = new Shape(gl, program, sphere_eye_vertices, sphere_eye_indices, sphere_eye_colors);
+const sphere_eye = new Shape(gl, program, sphere_eye_vertices, sphere_eye_indices, sphere_eye_colors, sphere_eye_normals);
 
 
 // Hierarchical model setup
@@ -154,7 +162,16 @@ const oscillationrate_value = document.getElementById("oscillationValue");
 oscillationrate_silder.addEventListener("input", () => {
   oscillationrate = parseFloat(oscillationrate_silder.value);
   oscillationrate_value.textContent = oscillationrate.toFixed(2);
-})
+});
+
+// lighting setup
+let Ka = 0.3;
+let Kd = 0.8;
+let Ks = 0.5;
+let alpha = 10.0;
+
+let light_world_position = [0, 3, 0];
+let view_direction = [0, 0, 0];
 
 // rendering
 function render() {
@@ -173,10 +190,12 @@ function render() {
     let model_view_matrix = mat4Identity();
     // camera translation
     model_view_matrix = mat4Translate(model_view_matrix, [camX, camY, camZ]);
-    // model_view_matrix = multiplyMat4(model_view_matrix, shape_rotation);
+    model_view_matrix = multiplyMat4(model_view_matrix, shape_rotation);
+
+    // light_world_position = [camX, camY, camZ];
 
     let model_transformation_matrix = mat4Identity();
-    model_transformation_matrix = multiplyMat4(model_transformation_matrix, shape_rotation);
+    // model_transformation_matrix = multiplyMat4(model_transformation_matrix, shape_rotation);
 
     //delta time in ms
     let current_time = Date.now();
@@ -189,6 +208,13 @@ function render() {
     gl.uniformMatrix4fv(uPM, false, proj);
     gl.uniformMatrix4fv(uMVM, false, model_view_matrix);
     gl.uniformMatrix4fv(uMTM, false, model_transformation_matrix);
+    
+    gl.uniform3fv(uLightPos, light_world_position);
+    gl.uniform3fv(uViewPos, view_direction);
+    gl.uniform1f(uKa, Ka);
+    gl.uniform1f(uKd, Kd);
+    gl.uniform1f(uKs, Ks);
+    gl.uniform1f(uAlpha, alpha);
 
     //set time in seconds
     gl.uniform1f(timeLoc, elapsed_time);

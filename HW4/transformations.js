@@ -115,12 +115,29 @@ function mat4Scale(mat, scale) {
   return result;
 }
 
-// takes in two vectors
-function cross_product(u, v) {
-    var result = [
-          u[1]*v[2] - u[2]*v[1],
-          u[2]*v[0] - u[0]*v[2],
-          u[0]*v[1] - u[1]*v[0]
+function norm(vector) {
+    let denom = Math.sqrt(vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2]);
+    let new_vector = [];
+    new_vector.push(vector[0]/denom, vector[1]/denom, vector[2]/denom);
+    return new_vector;
+}
+
+function mat3Transpose(matrix) {
+    let transposed_mat = [...Array(3*3)];
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            transposed_mat[i * 3 + j] = matrix[j * 3 + i];
+        }
+    }
+    return transposed_mat;
+}
+
+function mat4TransposeInner(matrix) {
+    let transposed_mat = [
+        matrix[0], matrix[4], matrix[8],
+        matrix[1], matrix[5], matrix[9],
+        matrix[2], matrix[6], matrix[10]
     ];
-    return result;
+
+    return transposed_mat;
 }

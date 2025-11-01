@@ -1,6 +1,6 @@
 
 function pyramid_data() {
-	let pyramid_vertices =[
+	let vertices = [
 		-1, -1, -1,  // 0
 		1, -1, -1,  // 1
 		1,  1, -1,  // 2
@@ -12,7 +12,7 @@ function pyramid_data() {
 		0,  1,  0   // 8
 	];
 
-	let pyramid_indices = [
+	let indices = [
 		// bottom
 		0, 1, 5,   0, 5, 4,
 		// right face
@@ -26,15 +26,23 @@ function pyramid_data() {
 
 	];
 
+	let normals = [];
+	for (let i = 0; i < vertices.length; i++) {
+		normals[i] = vertices[i];
+	}
+
+	console.log("pyramid normals is ", normals.length, " vertices is ", vertices.length);
+
 	return {
-        vertices: new Float32Array(pyramid_vertices),
-        indices: new Uint16Array(pyramid_indices)
+        vertices: new Float32Array(vertices),
+        indices: new Uint16Array(indices),
+		normals: new Float32Array(normals)
     };
 }
 
 function cube_data() {
 	// cube
-	let cube_vertices = [
+	let vertices = [
 	-1, -1, -1,  // 0
 	1, -1, -1,  // 1
 	1,  1, -1,  // 2
@@ -45,7 +53,7 @@ function cube_data() {
 	-1,  1,  1,  // 7
 	];
 
-	let cube_indices = [
+	let indices = [
 		// Front
 		4, 5, 6,   4, 6, 7,
 		// Back
@@ -60,15 +68,24 @@ function cube_data() {
 		0, 4, 7,   0, 7, 3,
 	];
 
+	let normals = [];
+	for (let i = 0; i < vertices.length; i++) {
+		normals[i] = vertices[i];
+	}
+
+	console.log("cube normals is ", normals.length, " vertices is ", vertices.length);
+
 	return {
-        vertices: new Float32Array(cube_vertices),
-        indices: new Uint16Array(cube_indices)
+        vertices: new Float32Array(vertices),
+        indices: new Uint16Array(indices),
+		normals: new Float32Array(normals)
     };
 };
 
 function sphere_data (u_steps, v_steps, r) {
 	let vertices = [];
 	let indices = [];
+	let normals = [];
 
 	for (let i = 0; i <= v_steps; i++) {
 		const v = i * Math.PI / v_steps;
@@ -79,10 +96,15 @@ function sphere_data (u_steps, v_steps, r) {
 			const u = j * 2 * Math.PI/u_steps;
 			const sinu = Math.sin(u);
 			const cosu = Math.cos(u);
-			const x = cosu * sinv;
-			const y = cosv;
-			const z = sinu * sinv;
-			vertices.push(r * x, r * y, r * z);
+			const x = r * cosu * sinv;
+			const y = r * cosv;
+			const z = r * sinu * sinv;
+			vertices.push(x, y, z);
+
+			let v = [];
+			v.push(x, y, z);
+			let vn = norm(v);
+			normals.push(vn[0], vn[1], vn[2]);
 		}
 	}
 
@@ -95,9 +117,12 @@ function sphere_data (u_steps, v_steps, r) {
 		}
 	}
 
+	console.log("sphere normals is ", normals.length, " vertices is ", vertices.length);
+
 	return {
         vertices: new Float32Array(vertices),
-        indices: new Uint16Array(indices)
+        indices: new Uint16Array(indices),
+		normals: new Float32Array(normals)
     };
 }
 
@@ -118,9 +143,8 @@ function cone_data(u_steps, v_steps, r, h) {
             const z = radius * sinu;
 
             vertices.push(x, y, z);
-			const ru = r * y;
-			const hcos = h * cosu;
-			normals.push()
+			
+			normals.push(x, y, z);
         }
 	}
 
@@ -135,6 +159,7 @@ function cone_data(u_steps, v_steps, r, h) {
 
 	let base_idx = vertices.length / 3;
 	vertices.push(0, 0, 0);
+	normals.push(0, 0, 0);
 
 	const base_start = 0;
 	for (let j = 0; j < u_steps; j++) {
@@ -143,15 +168,19 @@ function cone_data(u_steps, v_steps, r, h) {
 		indices.push(base_idx, k2, k1);
 	}
 
+	console.log("cone normals is ", normals.length, " vertices is ", vertices.length);
+
 	return {
         vertices: new Float32Array(vertices),
-        indices: new Uint16Array(indices)
+        indices: new Uint16Array(indices),
+		normals: new Float32Array(normals)
     };
 };
 
 function cylinder_data(u_steps, v_steps, r, h) {
     let vertices = [];
     let indices = [];
+	let normals = [];
 
     for (let i = 0; i <= v_steps; i++) {
         const y = i * h / v_steps;
@@ -163,6 +192,7 @@ function cylinder_data(u_steps, v_steps, r, h) {
             const x = r * cosu;
             const z = r * sinu;
             vertices.push(x, y, z);
+			normals.push(x, y, z);
         }
     }
 
@@ -177,6 +207,7 @@ function cylinder_data(u_steps, v_steps, r, h) {
 
     let top_center_index = vertices.length / 3;
     vertices.push(0, h, 0);
+	normals.push(0, h, 0);
     const top_row_start = v_steps * (u_steps + 1);
 
     for (let j = 0; j < u_steps; j++) {
@@ -187,6 +218,7 @@ function cylinder_data(u_steps, v_steps, r, h) {
 
     let bottom_center_index = vertices.length / 3;
     vertices.push(0, 0, 0);
+	normals.push(0, 0, 0);
 
     const bottom_row_start = 0;
     for (let j = 0; j < u_steps; j++) {
@@ -195,15 +227,18 @@ function cylinder_data(u_steps, v_steps, r, h) {
         indices.push(bottom_center_index, k2, k1);
     }
 
+	console.log("cylinder normals is ", normals.length, " vertices is ", vertices.length);
+
     return {
         vertices: new Float32Array(vertices),
-        indices: new Uint16Array(indices)
+        indices: new Uint16Array(indices),
+		normals: new Float32Array(normals)
     };
 };
 
-function generate_colors(rgb, num_idx) {
+function generate_colors(rgb, max_iter) {
 	let colors = [];
-	for (let i = 0; i < num_idx; i++) {
+	for (let i = 0; i < max_iter; i++) {
         colors.push(rgb[0], rgb[1], rgb[2]);
     }
 	return new Float32Array(colors);

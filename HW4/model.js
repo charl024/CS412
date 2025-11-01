@@ -150,90 +150,10 @@ class Model {
         
         switch (idx) {
             case 0:
-                let base_shape = cone_body;
+                let base_shape = cube_body;
                 initial_transform = mat4Translate(initial_transform, [0.0, 0.0, 0.0]);
                 this.figure[idx] = this.create_node(idx, initial_transform, () => this.base_segment(), null, base_shape);
                 break;
-
-            case 1:
-                let segment1_shape = cube_body;
-                initial_transform = mat4Translate(initial_transform, [2.0, 0.0, 0.0]);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.segment1(), null, segment1_shape);
-                break;
-
-            case 2:
-                let segment2_shape = cube_body;
-                initial_transform = mat4Translate(initial_transform, [1.0, 0.0, 0.0]);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.segment2(), null, segment2_shape);
-                break;
-
-            case 3:
-                let segment3_shape = cylinder_body;
-                initial_transform = mat4Translate(initial_transform, [-0.8, 0.0, 0.0]);
-                initial_transform = mat4RotateZ(initial_transform, -Math.PI / 2);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.segment3(), null, segment3_shape);
-                break;
-
-            case 4:
-                let segment4_shape = cone_body;
-                initial_transform = mat4Translate(initial_transform, [0.0, 1.7, 0.0]);
-                // initial_transform = mat4RotateZ(initial_transform, -Math.PI);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.segment4(), null, segment4_shape);
-                break;
-
-            case 5:
-                let tail_shape = pyramid_fin;
-                initial_transform = mat4Translate(initial_transform, [0.0, 1.0, 0.0]);
-                initial_transform = mat4RotateZ(initial_transform, -Math.PI);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.tail_segment(), null, tail_shape);
-                break;
-
-            case 6:
-                let head_shape = cube_body;
-                initial_transform = mat4Translate(initial_transform, [-2, 0.0, 0.0]);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.head_segment(), null, head_shape);
-                break;
-
-            case 7:
-                let face_shape = sphere_head;
-                initial_transform = mat4Translate(initial_transform, [-1, 0.0, 0.0]);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.face_segment(), null, face_shape);
-                break;
-
-            case 8:
-                let left_fin_shape = pyramid_fin;
-                initial_transform = mat4Translate(initial_transform, [-0.8, 0.0, 1.0]);
-                initial_transform = mat4RotateX(initial_transform, -Math.PI / 2);
-                initial_transform = mat4RotateZ(initial_transform, Math.PI);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.left_fin_segment(), null, left_fin_shape);
-                break;
-
-            case 9:
-                let right_fin_shape = pyramid_fin;
-                initial_transform = mat4Translate(initial_transform, [-0.8, 0.0, -1.0]);
-                initial_transform = mat4RotateX(initial_transform, Math.PI / 2);
-                initial_transform = mat4RotateZ(initial_transform, Math.PI);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.right_fin_segment(), null, right_fin_shape);
-                break;
-
-            case 10:
-                let top_fin_shape = pyramid_fin;
-                initial_transform = mat4Translate(initial_transform, [-0.3, 1.0, 0.0]);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.top_fin_segment(), null, top_fin_shape);
-                break;
-
-            case 11:
-                let left_eye_shape = sphere_eye;
-                initial_transform = mat4Translate(initial_transform, [-0.8, 0.3, 0.5]);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.left_eye_segment(), null, left_eye_shape);
-                break;
-
-            case 12:
-                let right_eye_shape = sphere_eye;
-                initial_transform = mat4Translate(initial_transform, [-0.8, 0.3, -0.5]);
-                this.figure[idx] = this.create_node(idx, initial_transform, () => this.right_eye_segment(), null, right_eye_shape);
-                break;
-
             default:
                 break;
         }
@@ -242,67 +162,7 @@ class Model {
 
     // per-segment functions for world transform
     base_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    segment1() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.8, 0.8, 0.8]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    segment2() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.5, 0.5, 0.5]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-    
-    segment3() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.4, 0.89, 0.4]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    segment4() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.4, 1.0, 0.4]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    tail_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 0.3]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    head_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 0.9, 0.9]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    face_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 0.9, 0.9]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    left_fin_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.3, 0.2]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    right_fin_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.3, 0.2]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    top_fin_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [2.0, 1.0, 0.2]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    left_eye_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.15, 0.15, 0.15]);
-        gl.uniformMatrix4fv(uMTM, false, segment_mat);
-    }
-
-    right_eye_segment() {
-        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.15, 0.15, 0.15]);
+        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 0.0001, 1.0]);
         gl.uniformMatrix4fv(uMTM, false, segment_mat);
     }
 
@@ -310,86 +170,15 @@ class Model {
     update_base(node) {
         this.spinphase += this.dt * this.spinrate;
         let amplitude = 0.3;
-        let frequency = 1.0 * this.oscillationrate;
-        let y_offset = 2 * amplitude * Math.sin(2 * Math.PI * frequency * this.dynamic_angle);
-
+        let frequency = 1.5 * this.oscillationrate;
+        let y_offset = 5 * amplitude * Math.sin(2 * Math.PI * frequency * this.dynamic_angle);
+        let x_offset = 5 * amplitude * Math.cos(2 * Math.PI * frequency * this.dynamic_angle);
         let delta = mat4Identity();
         
         delta = mat4RotateY(delta, this.spinphase);
-        delta = mat4Translate(delta, [0, y_offset, 0]);
+        delta = mat4Translate(delta, [y_offset, 0, x_offset]);
 
         node.transform = multiplyMat4(node.itransform, delta);
-    }
-
-    update_segment1(node) {
-        let amplitude = Math.PI / 32;
-        let angle = amplitude * Math.sin(2 * Math.PI * this.oscillationrate * this.dynamic_angle);
-
-        let delta = mat4Identity();
-        delta = mat4RotateY(delta, angle);
-        node.transform = multiplyMat4(node.itransform, delta);
-    }
-
-    update_segment2(node) {
-        let amplitude = Math.PI / 28;
-        let phase = 0.6;
-        let angle = amplitude * Math.sin(2 * Math.PI * this.oscillationrate * this.dynamic_angle * phase);
-
-        let delta = mat4Identity();
-        delta = mat4RotateY(delta, angle);
-        node.transform = multiplyMat4(node.itransform, delta);
-    }
-
-    update_tail(node) {
-        let amplitude = Math.PI / 12;
-        let phase = 1.2;
-
-        let angle = amplitude * Math.sin(2 * Math.PI * this.oscillationrate * this.dynamic_angle * phase);
-
-        let delta = mat4Identity();
-        delta = mat4RotateY(delta, angle);
-        node.transform = multiplyMat4(node.itransform, delta);
-    }
-
-    // these functions are placeholders, current not in use because I do not need them to animate the fish
-    update_segment3(node) {
-
-    }
-
-    update_segment4(node) {
-
-    }
-
-    update_head(node) {
-
-    }
-
-    update_face(node) {
-
-    }
-
-    update_face(node) {
-
-    }
-
-    update_left_fin(node) {
-
-    }
-
-    update_right_fin(node) {
-        
-    }
-
-    update_top_fin(node) {
-
-    }
-
-    update_left_eye(node) {
-
-    }
-
-    update_right_eye(node) {
-
     }
 }
 
