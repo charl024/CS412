@@ -12,6 +12,16 @@ function ortho(left, right, bottom, top, near, far) {
     return [-2*lr,0,0,0, 0,-2*bt,0,0, 0,0,2*nf,0, (left+right)*lr,(top+bottom)*bt,(far+near)*nf,1];
 }
 
+function apply_ortho(zoom, scale, aspect, zNear, zFar) {
+    let scaled_left = zoom * -scale * aspect;
+    let scaled_right = zoom * scale * aspect;
+    let scaled_bottom = zoom * -scale;
+    let scaled_top = zoom * scale;
+
+    let proj = ortho(scaled_left, scaled_right, scaled_bottom, scaled_top, zNear, zFar);
+    return proj;
+}
+
 // Identity matrix
 function mat4Identity() {
     return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);

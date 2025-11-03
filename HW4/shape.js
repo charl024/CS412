@@ -1,66 +1,44 @@
-// Shape.js
-// uses a vertex array object to handle gl buffers instead of purely vertex buffers
-// allows one to draw a specified shape
+
 
 class Shape {
-    constructor(gl, program, vertices, indices, colors, normals) {
+    constructor(gl, program, geometry, material = {}) {
         this.gl = gl;
-        this.vertices = vertices;
-        this.indices = indices;
-        this.colors = colors;
-        this.verlen = vertices.length;
-        this.idxlen = indices.length;
+        this.program = program;
 
-        if (vertices.length % 3 !== 0) 
-            throw new Error("vertices not multiple of 3");
-        if (normals.length  && normals.length !== vertices.length)
-            throw new Error("normals length must equal vertices length");
-        if (colors.length   && colors.length  !== vertices.length)
-            throw new Error("colors length must equal vertices length");
+        this.vertices = new Float32Array(geometry.vertices);
+        this.indices  = new Uint16Array(geometry.indices);
+        this.colors   = new Float32Array(geometry.colors);
+        this.normals  = new Float32Array(geometry.normals);
 
-        this.vao = gl.createVertexArray();
-        gl.bindVertexArray(this.vao);
+        this.material = {
+            Ka: material.Ka ?? 0.5,
+            Kd: material.Kd ?? 0.5,
+            Ks: material.Ks ?? 0.5,
+            alpha: material.alpha ?? 10.0,
+            color: material.color ?? [0.5, 0.5, 0.5]
+        };
 
-        this.vbo = gl.createBuffer();  
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        this.segment_function
 
-        this.cbo = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.cbo);
-        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-
-        this.nbo = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.nbo);
-        gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
-
-        this.ibo = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-
-        const normalLoc = gl.getAttribLocation(program, "aNormal");
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.nbo);
-        gl.enableVertexAttribArray(normalLoc);
-        gl.vertexAttribPointer(normalLoc, 3, gl.FLOAT, false, 0, 0);
-
-        const posLoc = gl.getAttribLocation(program, "aPosition");
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-        gl.enableVertexAttribArray(posLoc);
-        gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
-
-        const colorLoc = gl.getAttribLocation(program, "aColor");
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.cbo);
-        gl.enableVertexAttribArray(colorLoc);
-        gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
-
-        gl.bindVertexArray(null);
+        this.buffer = new ShapeBuffer(gl, program, this.vertices, this.indices, this.colors, this.normals);
     }
 
-    draw() {
+    draw(uniforms) {
         const gl = this.gl;
-        gl.bindVertexArray(this.vao);
-        gl.drawElements(gl.TRIANGLES, this.idxlen, gl.UNSIGNED_SHORT, 0);
-        // gl.drawElements(gl.LINE_LOOP, this.idxlen, gl.UNSIGNED_SHORT, 0);
-        gl.bindVertexArray(null);
-    }
 
+        gl.useProgram(this.program);
+
+        gl.uniform1f(uniforms.uKd, this.material.Kd);
+        gl.uniform1f(uniforms.uKs, this.material.Ks);
+        gl.uniform1f(uniforms.uAlpha, this.material.alpha);
+
+        this.buffer.render();
+    }
+}
+
+function makeShape(gl, program, geometry_func, material) {
+    const geo = geometry_func();
+    const colors = generate_colors(material.color, geo.vertices.length / 3);
+    geo.colors = colors;
+    return new Shape(gl, program, geo, material);
 }

@@ -26,18 +26,26 @@ const canvas = document.getElementById("glcanvas");
 const gl = canvas.getContext("webgl2");
 if (!gl) alert("WebGL2 not supported");
 
-let vert_editor = document.getElementById("vertEditor");
-let frag_editor = document.getElementById("fragEditor");
-vert_editor.value = document.getElementById("vertex-shader").textContent;
-frag_editor.value = document.getElementById("fragment-shader").textContent;
+const vertex_shader_src = document.getElementById("vertex-shader").textContent.trim();
+const fragment_shader_src = document.getElementById("fragment-shader").textContent.trim();
 
 let program, posLoc, colorLoc, uMVM, uPM, uMTM;
-let uKa, uKd, uKs, uAlpha, uLightPos, uViewPos;
+let uKa, uKd, uKs, uAlpha, uViewPos, uAttOn;
+
+let uLightPos1, uLightPos2, uLightColor1, uLightColor2;
+
+const material_uniforms = {
+    uKa, 
+    uKd, 
+    uKs, 
+    uAlpha,
+};
 
 function init_shader_program() {
     try {
-    program = create_program(gl, vert_editor.value, frag_editor.value);
+    program = create_program(gl, vertex_shader_src, fragment_shader_src);
     gl.useProgram(program);
+
     posLoc = gl.getAttribLocation(program, "aPosition");
     colorLoc = gl.getAttribLocation(program, "aColor");
     timeLoc = gl.getUniformLocation(program, "uTime");
@@ -45,23 +53,29 @@ function init_shader_program() {
     uPM = gl.getUniformLocation(program, "uProjectionMatrix");
     uMTM = gl.getUniformLocation(program, "uModelTransformationMatrix");
 
-    uKa = gl.getUniformLocation(program, "uKa");
-    uKd = gl.getUniformLocation(program, "uKd");
-    uKs = gl.getUniformLocation(program, "uKs");
-    uAlpha = gl.getUniformLocation(program, "uAlpha");
-    uLightPos = gl.getUniformLocation(program, "uLightPos");
+    material_uniforms.uKa = gl.getUniformLocation(program, "uKa");
+    material_uniforms.uKd = gl.getUniformLocation(program, "uKd");
+    material_uniforms.uKs = gl.getUniformLocation(program, "uKs");
+    material_uniforms.uAlpha = gl.getUniformLocation(program, "uAlpha");
+
+    uLightPos1 = gl.getUniformLocation(program, "uLightPos1");
+    uLightPos2 = gl.getUniformLocation(program, "uLightPos2");
+    uLightColor1 = gl.getUniformLocation(program, "uLightColor1");
+    uLightColor2 = gl.getUniformLocation(program, "uLightColor2");
+
     uViewPos = gl.getUniformLocation(program, "uViewPos");
-    } catch (e) { console.error(e); }
+    uAttOn = gl.getUniformLocation(program, "uAttBool")
+    
+    } catch (e) { 
+        console.error(e); 
+    }
 }
 
 init_shader_program();
 
-vert_editor.onkeyup = init_shader_program;
-frag_editor.onkeyup = init_shader_program;
-
 // Mouse and keyboard interactions
-let mouseDown = false, lastX, lastY, rotX = 0.3, rotY = 0;
-let camX = 0, camY = 0, camZ = -3;
+let mouseDown = false, lastX, lastY, rotX = 0.5, rotY = 0.0;
+let camX = 0, camY = -4, camZ = -8;
 
 canvas.addEventListener('mousedown', e => {
     mouseDown = true;
@@ -106,72 +120,124 @@ let f = 1 / Math.tan(fov / 2);
 
 let proj = perspective(fov, aspect, zNear, zFar);
 
-// Animation loop
-let last_time = Date.now();
-let start_time = Date.now();
+// shape setup
+const cube_ground = makeShape(gl, program, cube_data, ground_material);
+const cube_bench = makeShape(gl, program, cube_data, wood_material);
+const cube_straw = makeShape(gl, program, cube_data, hay_material);
 
-// Initialize primitives
-const {vertices: cube_body_vertices, indices: cube_body_indices, normals: cube_body_normals} = cube_data();
-const cube_body_colors = generate_colors([0.5,0.5,0.5], cube_body_vertices.length / 3);
-const cube_body = new Shape(gl, program, cube_body_vertices, cube_body_indices, cube_body_colors, cube_body_normals);
+const cylinder_metal_gray = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_gray_material);
+const cylinder_metal_red = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_red_material);
+const cylinder_metal_orange = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_orange_material);
 
-const {vertices: pyramid_fin_vertices, indices: pyramid_fin_indices, normals: pyramid_fin_normals} = pyramid_data();
-const pyramid_fin_colors = generate_colors([0.5, 0.0, 0.5], pyramid_fin_vertices.length / 3);
-const pyramid_fin = new Shape(gl, program, pyramid_fin_vertices, pyramid_fin_indices, pyramid_fin_colors, pyramid_fin_normals);
-
-const {vertices: cone_body_vertices, indices: cone_body_indices, normals: cone_body_normals} = cone_data(30, 30, 1.0, 2.0);
-const cone_body_colors = generate_colors([242.0/255.0, 0.7, 122.0/255.0], cone_body_vertices.length / 3);
-const cone_body = new Shape(gl, program, cone_body_vertices, cone_body_indices, cone_body_colors, cone_body_normals);
-
-const {vertices: cylinder_body_vertices, indices: cylinder_body_indices, normals: cylinder_body_normals} = cylinder_data(30, 30, 1.0, 2.0);
-const cylinder_body_colors = generate_colors([242.0/255.0, 0.7, 122.0/255.0], cylinder_body_vertices.length / 3);
-const cylinder_body = new Shape(gl, program, cylinder_body_vertices, cylinder_body_indices, cylinder_body_colors, cylinder_body_normals);
-
-const {vertices: sphere_head_vertices, indices: sphere_head_indices, normals: sphere_head_normals} = sphere_data(100, 100, 0.5);
-const sphere_head_colors = generate_colors([242.0/255.0, 0.5, 122.0/255.0], sphere_head_vertices.length / 3);
-const sphere_head = new Shape(gl, program, sphere_head_vertices, sphere_head_indices, sphere_head_colors, sphere_head_normals);
-
-const {vertices: sphere_eye_vertices, indices: sphere_eye_indices, normals: sphere_eye_normals} = sphere_data(10, 30, 1.0);
-const sphere_eye_colors = generate_colors([0.0, 0.0, 0.0], sphere_eye_vertices.length / 3);
-const sphere_eye = new Shape(gl, program, sphere_eye_vertices, sphere_eye_indices, sphere_eye_colors, sphere_eye_normals);
-
+const cone_topping = makeShape(gl, program, () => cone_data(30, 30, 1.0, 1.0), candy_material);
+const sphere_ball = makeShape(gl, program, () => sphere_data(30, 30, 1.0), ball_material);
 
 // Hierarchical model setup
 let figure = [];
-let num_segments = 1;
+let num_segments = 15;
 let model = new Model(num_segments,  mat4Identity(), figure);
 
-// model.add_children(0,1);
+model.add_children(0,1);
+model.add_children(1,2);
+model.add_children(1,3);
+model.add_children(1,4);
+model.add_children(1,5);
+model.add_children(0,6);
+model.add_children(0,7);
+model.add_children(1,8);
+model.add_children(1,9);
+model.add_children(1,10);
+model.add_children(1,11);
+model.add_children(1,12);
+model.add_children(12,13);
+model.add_children(12,13);
+model.add_children(13,14);
+
+// model.add_children(2,3);
+// model.add_children(4,5);
+// model.add_children(5,6);
+
+// lighting setup
+let light_world_position1 = [5, 0, 5];
+let light_world_position2 = [-5, 0, -5];
+
+let light_color1 = [1.0, 1.0, 1.0];
+let light_color2 = [1.0, 1.0, 1.0];
+
+let view_direction = [0, 0, 0];
 
 // interactive ui
 let spinrate = 0.1;
 
-const spinrate_slider = document.getElementById("spinrateSlider");
-const spinrate_value = document.getElementById("spinrateValue");
+// const spinrate_slider = document.getElementById("spinrateSlider");
+// const spinrate_value = document.getElementById("spinrateValue");
 
-spinrate_slider.addEventListener("input", () => {
-  spinrate = parseFloat(spinrate_slider.value);
-  spinrate_value.textContent = spinrate.toFixed(2);
-})
+// spinrate_slider.addEventListener("input", () => {
+//   spinrate = parseFloat(spinrate_slider.value);
+//   spinrate_value.textContent = spinrate.toFixed(2);
+// })
 
 let oscillationrate = 1.0;
 
-const oscillationrate_silder = document.getElementById("oscillationSlider");
-const oscillationrate_value = document.getElementById("oscillationValue");
+// const oscillationrate_silder = document.getElementById("oscillationSlider");
+// const oscillationrate_value = document.getElementById("oscillationValue");
 
-oscillationrate_silder.addEventListener("input", () => {
-  oscillationrate = parseFloat(oscillationrate_silder.value);
-  oscillationrate_value.textContent = oscillationrate.toFixed(2);
+// oscillationrate_silder.addEventListener("input", () => {
+//   oscillationrate = parseFloat(oscillationrate_silder.value);
+//   oscillationrate_value.textContent = oscillationrate.toFixed(2);
+// });
+
+const lightintensity_slider = document.getElementById("lightIntensitySlider");
+const lightintensity_value = document.getElementById("lightIntensityValue");
+
+let ambient_coeff = 0.3;
+
+lightintensity_slider.addEventListener("input", () => {
+  ambient_coeff = parseFloat(lightintensity_slider.value);
+  lightintensity_value.textContent = ambient_coeff.toFixed(2);
 });
 
-// lighting setup
-let Ka = 0.3;
-let Kd = 0.8;
-let Ks = 0.5;
-let alpha = 10.0;
+let attButton = false;
 
-let light_world_position = [0, 3, 0];
-let view_direction = [0, 0, 0];
+document.getElementById("AttOnButton").addEventListener("click", () => {
+    attButton = !attButton;
+});
+
+// let animationButton = false;
+
+// document.getElementById("AnimationButton").addEventListener("click", () => {
+//     animationButton = !animationButton;
+// });
+
+let shadingButton = false;
+
+document.getElementById("ShadingButton").addEventListener("click", () => {
+    shadingButton = !shadingButton;
+});
+
+let temperatureLights = false;
+
+document.getElementById("TLButton").addEventListener("click", () => {
+    temperatureLights = !temperatureLights;
+});
+
+function update_lights_pos(angle) {
+    light_world_position1 = [5 * Math.cos(angle), 5 * Math.sin(angle), 5];
+    light_world_position2 = [-5 * Math.cos(angle), -5 * Math.sin(angle), -5];
+
+    if (temperatureLights) {
+        light_color1 = [1.0, 0.6, 0.4];
+        light_color2 = [0.4, 0.6, 1.0];
+    } else {
+        light_color1 = [1.0, 1.0, 1.0];
+        light_color2 = [1.0, 1.0, 1.0];
+    }
+}
+
+
+// Animation loop
+let last_time = Date.now();
+let start_time = Date.now();
 
 // rendering
 function render() {
@@ -188,11 +254,12 @@ function render() {
 
     // init model-view matrix as identity matrix
     let model_view_matrix = mat4Identity();
-    // camera translation
-    model_view_matrix = mat4Translate(model_view_matrix, [camX, camY, camZ]);
+    
+    // view transformations
     model_view_matrix = multiplyMat4(model_view_matrix, shape_rotation);
+    // model_view_matrix = multiplyMat4(model_view_matrix, lookDown);
+    model_view_matrix = mat4Translate(model_view_matrix, [camX, camY, camZ]);
 
-    // light_world_position = [camX, camY, camZ];
 
     let model_transformation_matrix = mat4Identity();
     // model_transformation_matrix = multiplyMat4(model_transformation_matrix, shape_rotation);
@@ -203,26 +270,33 @@ function render() {
     let elapsed_time = (current_time - start_time)/1000.0;
     last_time = current_time;
     update_camera(delta_time);
+    update_lights_pos(elapsed_time);
 
     // set the uniforms
     gl.uniformMatrix4fv(uPM, false, proj);
     gl.uniformMatrix4fv(uMVM, false, model_view_matrix);
     gl.uniformMatrix4fv(uMTM, false, model_transformation_matrix);
-    
-    gl.uniform3fv(uLightPos, light_world_position);
+
+    gl.uniform3fv(uLightPos1, light_world_position1);
+    gl.uniform3fv(uLightPos2, light_world_position2);
+    gl.uniform3fv(uLightColor1, light_color1);
+    gl.uniform3fv(uLightColor2, light_color2);
+
     gl.uniform3fv(uViewPos, view_direction);
-    gl.uniform1f(uKa, Ka);
-    gl.uniform1f(uKd, Kd);
-    gl.uniform1f(uKs, Ks);
-    gl.uniform1f(uAlpha, alpha);
+    gl.uniform1f(uAttOn, attButton);
+    gl.uniform1f(material_uniforms.uKa, ambient_coeff);
 
     //set time in seconds
     gl.uniform1f(timeLoc, elapsed_time);
 
     // draw the model
     model.set_mtm(model_transformation_matrix);
+    
+    // if (animationButton) {
     model.update_dynamic_params(elapsed_time, delta_time, spinrate, oscillationrate);
-    // model.update_node_transform(0);
+    model.update_node_transform(0);
+    // }
+    
     model.walk(0);
 
     requestAnimationFrame(render);
