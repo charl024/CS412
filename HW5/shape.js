@@ -1,7 +1,7 @@
 
 
 class Shape {
-    constructor(gl, program, geometry, material = {}) {
+    constructor(gl, program, geometry, tex_img_src, material = {}) {
         this.gl = gl;
         this.program = program;
 
@@ -10,6 +10,14 @@ class Shape {
         this.colors     = new Float32Array(geometry.colors);
         this.normals    = new Float32Array(geometry.normals);
         this.tex_coords = new Float32Array(geometry.tex_coords);
+
+        this.is_tex_loaded = false;
+
+        if (tex_img_src) {
+            console.log("tex img src valid")
+            this.texture = gl.createTexture();
+            this.tex_img_src = tex_img_src;
+        }
 
         this.material = {
             Kd: material.Kd ?? 0.5,
@@ -23,10 +31,35 @@ class Shape {
         this.buffer = new ShapeBuffer(gl, program, this.vertices, this.indices, this.colors, this.normals, this.tex_coords);
     }
 
+    load_texture_src() {
+        const tex_img = new Image();
+        tex_img.src = this.tex_img_src;
+        tex_img.onload = () => {
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tex_img);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        }
+    }
+
     draw(uniforms) {
         const gl = this.gl;
 
         gl.useProgram(this.program);
+
+        if (this.tex_img_src && !this.is_tex_loaded) {
+            this.load_texture_src();
+            this.is_tex_loaded = true;
+        }
+
+        if (this.texture) {
+            let unit = 0;
+            gl.activeTexture(gl.TEXTURE0 + unit); 
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            gl.uniform1i(gl.getUniformLocation(this.program, "uTex"), unit);
+        }
 
         gl.uniform1f(uniforms.uKd, this.material.Kd);
         gl.uniform1f(uniforms.uKs, this.material.Ks);
@@ -36,9 +69,9 @@ class Shape {
     }
 }
 
-function makeShape(gl, program, geometry_func, material) {
+function makeShape(gl, program, geometry_func, tex_img_src, material) {
     const geo = geometry_func();
     const colors = generate_colors(material.color, geo.vertices.length / 3);
     geo.colors = colors;
-    return new Shape(gl, program, geo, material);
+    return new Shape(gl, program, geo, tex_img_src, material);
 }

@@ -122,23 +122,28 @@ let f = 1 / Math.tan(fov / 2);
 
 let proj = perspective(fov, aspect, zNear, zFar);
 
+
+const rocky_terrain_img = "./textures/rocky_terrain_tex.png";
+const river_pebbles_img = "./textures/river_pebbles_tex.png";
+
 // shape setup
-const cube_ground = makeShape(gl, program, cube_data, ground_material);
-const cube_bench = makeShape(gl, program, cube_data, wood_material);
-const cube_straw = makeShape(gl, program, cube_data, hay_material);
+const cube_ground = makeShape(gl, program, cube_data, rocky_terrain_img, ground_material);
+const cube_ground2 = makeShape(gl, program, cube_data, river_pebbles_img, wood_material);
+// const cube_straw = makeShape(gl, program, cube_data, rocky_terrain_img, hay_material);
 
 // const cylinder_metal_gray = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_gray_material);
 // const cylinder_metal_red = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_red_material);
 // const cylinder_metal_orange = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_orange_material);
 
 // const cone_topping = makeShape(gl, program, () => cone_data(30, 30, 1.0, 1.0), candy_material);
-const sphere_ball = makeShape(gl, program, () => sphere_data(30, 30, 1.0), ball_material);
+const sphere_ball = makeShape(gl, program, () => sphere_data(30, 30, 1.0), rocky_terrain_img, wood_material);
 
 // Hierarchical model setup
 let figure = [];
-let num_segments = 1;
+let num_segments = 2;
 let model = new Model(num_segments,  mat4Identity(), figure);
 
+model.add_children(0, 1);
 
 // lighting setup
 let light_world_position1 = [5, 0, 5];
@@ -219,22 +224,19 @@ function update_lights_pos(angle) {
 
 // texture setup
 const rocky_terrain_tex = new Image();
-rocky_terrain_tex.src = "./textures/rocky_terrain_tex.png";
+rocky_terrain_tex.src = "./textures/river_pebbles_tex.png";
 
-const texture = gl.createTexture();
-rocky_terrain_tex.onload = () => {
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, rocky_terrain_tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+// const texture = gl.createTexture();
+// rocky_terrain_tex.onload = () => {
+//     gl.bindTexture(gl.TEXTURE_2D, texture);
+//     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, rocky_terrain_tex);
+//     gl.generateMipmap(gl.TEXTURE_2D);
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
-    let unit = 0;
-    gl.activeTexture(gl.TEXTURE0 + unit); 
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(gl.getUniformLocation(program, "uTex"), unit);
-}
-
-
+    
+// }
 
 
 // Animation loop

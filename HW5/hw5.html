@@ -231,7 +231,7 @@ void main() {
 
   vec4 tex_color = texture(uTex, vTexCoord);
 
-  vec3 total_light = tex_color.rgb * (light1 + light2);
+  vec3 total_light = vColor * tex_color.rgb * (light1 + light2);
   //vec3 total_light = vColor * (light1);
   fragColor = vec4(total_light, 1.0);
 }

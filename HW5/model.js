@@ -136,7 +136,17 @@ class Model {
         switch (idx) {
             case 0:
                 base_shape = cube_ground;
-                initial_transform = mat4Translate(initial_transform, [0.0, -0.0, 0.0]);
+                initial_transform = mat4Translate(initial_transform, [0.0, 0.0, 0.0]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);
+                break;
+            case 1:
+                base_shape = cube_ground2;
+                initial_transform = mat4Translate(initial_transform, [2.0, 0.0, 0.0]);
                 this.figure[idx] = this.create_node(idx, initial_transform, 
                     () => {
                         let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
