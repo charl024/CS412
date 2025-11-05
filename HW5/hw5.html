@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <!-- <title>UNM CS 412/512 HW4</title> -->
+  <style>
+  body {
+  background: #111;
+  color: #ccc;
+  font-family: monospace;
+  margin: 0;
+  height: 100vh;  
+  display: flex;
+  flex-direction: column;
+  }
+
+  .headerText {
+    text-align: left;
+    padding: 20px;
+    align-self: flex-start;
+  }
+
+  .mainContent {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .canvasContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+  }
+
+  .sliderRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .sliderRow label { 
+    width: 140px; 
+    text-align: 
+    right; 
+  }
+
+  .sliderRow input[type="range"] { 
+    accent-color: rgb(25, 103, 248); 
+    width: 200px; 
+  } 
+  
+  .sliderRow span { 
+    width: 50px; 
+    text-align: left; 
+  }
+
+  .buttonContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center; 
+    width: 100%;
+    margin-top: 20px;
+    gap: 10px; 
+  }
+
+  .actionButton {
+    padding: 8px 16px;
+    font-family: monospace;
+    background-color: #333;
+    color: #ccc;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .actionButton:hover {
+    background-color: #555;
+  }
+
+  
+</style>
+</head>
+
+<body>
+  
+  <div class="headerText">
+    <p>
+      <h2>Lighting Demonstration</h2>
+      Use mouse to drag and rotate the figure.<br>
+      Use WASD keys to move the camera up/down/left/right, scroll to zoom forwards/backwards.<br>
+      Toggle the settings on the right to change lighting. Temperature Lights option makes the obvious there are two lights.
+      
+    </p>
+  </div>
+
+  <div class="mainContent">
+    <div class="canvasContainer">
+      <canvas id="glcanvas" width="800" height="600"></canvas>
+
+      <div class="sliderColumn">
+        <!-- <div class="sliderRow">
+          <label for="spinrateSlider">Rotate</label>
+          <input type="range" id="spinrateSlider" min="-10" max="10" step="0.1" value="0.1">
+          <span id="spinrateValue">0.10</span>
+        </div>
+
+        <div class="sliderRow">
+          <label for="oscillationSlider">Oscillate</label>
+          <input type="range" id="oscillationSlider" min="0" max="10" step="0.1" value="1.0">
+          <span id="oscillationValue">1.00</span>
+        </div> -->
+
+        <div class="sliderRow">
+          <label for="lightIntensitySlider">Ambient Light</label>
+          <input type="range" id="lightIntensitySlider" min="0" max="0.5" step="0.01" value="1.0">
+          <span id="lightIntensityValue">1.00</span>
+        </div>
+
+        <div class="buttonContainer">
+          <button class="actionButton" id="AttOnButton">Toggle Attenuation</button>
+          <!-- <button class="actionButton" id="AnimationButton">Toggle Animation</button> -->
+          <button class="actionButton" id="ShadingButton">Toggle Shading Type</button>
+          <button class="actionButton" id="TLButton">Toggle Temperature Lights</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vertex shader -->
+  <script id="vertex-shader" type="x-shader/x-vertex">#version 300 es
+in vec3 aPosition;
+in vec3 aColor;
+in vec3 aNormal;
+in vec2 aTexCoord;
+
+uniform float uTime; //time in sec
+uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix; 
+uniform mat4 uModelTransformationMatrix;
+
+uniform vec3 uLightPos1;
+uniform vec3 uLightPos2;
+
+out vec3 vColor;
+out vec3 vPosition;
+out vec3 vNormal;
+
+out vec3 vLightPos1;
+out vec3 vLightPos2;
+
+out vec2 vTexCoord;
+
+void main() {
+  vec4 position = uModelViewMatrix * uModelTransformationMatrix * vec4(aPosition, 1.0);
+
+  mat4 mv_mat = uModelViewMatrix * uModelTransformationMatrix;
+
+  mat3 normal_matrix = transpose(inverse(mat3(mv_mat)));
+
+  vLightPos1 = uLightPos1;
+  vLightPos2 = uLightPos2;
+
+  vColor = aColor;
+  vPosition = position.xyz;
+  vNormal = normalize(normal_matrix * aNormal);
+
+  vTexCoord = aTexCoord;
+
+  gl_Position = uProjectionMatrix * position;
+}
+  </script>
+  <script id="fragment-shader" type="x-shader/x-fragment">#version 300 es
+precision mediump float;
+in vec3 vColor;
+in vec3 vPosition;
+in vec3 vNormal;
+
+in vec3 vLightPos1;
+in vec3 vLightPos2; 
+
+in vec2 vTexCoord;
+
+uniform vec3 uLightColor1;
+uniform vec3 uLightColor2;
+
+uniform float uKa;
+uniform float uKd;
+uniform float uKs;
+uniform float uAlpha;
+uniform vec3 uViewPos;
+uniform sampler2D uTex;
+
+uniform bool uAttBool;
+
+out vec4 fragColor;
+
+vec3 computeLight(vec3 lightPos, vec3 lightColor) {
+  vec3 n_normal = normalize(vNormal);
+  vec3 light_dir = normalize(lightPos - vPosition);
+  vec3 reflect_dir = reflect(-light_dir, n_normal);
+  vec3 view_dir = normalize(uViewPos - vPosition);
+
+  float diff_component = max(dot(n_normal, light_dir), 0.0);
+  vec3 diffuse = uKd * diff_component * lightColor;
+
+  float spec_component = pow(max(dot(view_dir, reflect_dir), 0.0), uAlpha);
+  vec3 specular = uKs * spec_component * lightColor;
+
+  vec3 ambient = uKa * lightColor;
+
+  float d = length(lightPos - vPosition);
+  float f_att = 1.0 / (1.0 + 0.09*d + 0.032*d*d);
+
+  if (uAttBool) {
+    return ambient + f_att*(diffuse + specular);
+  } else {
+    return ambient + diffuse + specular;
+  }
+}
+
+void main() {
+  vec3 light1 = computeLight(vLightPos1, uLightColor1);
+  vec3 light2 = computeLight(vLightPos2, uLightColor2);
+
+  vec4 tex_color = texture(uTex, vTexCoord);
+
+  vec3 total_light = tex_color.rgb * (light1 + light2);
+  //vec3 total_light = vColor * (light1);
+  fragColor = vec4(total_light, 1.0);
+}
+  </script>
+
+  <script src="material_data.js"></script>
+  <script src="shapebuffer.js"></script>
+  <script src="shape.js"></script>
+  <script src="primitives.js"></script>
+  <script src="transformations.js"></script>
+  <script src="model.js"></script>
+  <script src="main.js"></script>
+</body>
+
+</html>
