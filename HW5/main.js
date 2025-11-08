@@ -31,7 +31,7 @@ const fragment_shader_src = document.getElementById("fragment-shader").textConte
 
 let program, posLoc, colorLoc, uMVM, uPM, uMTM;
 let uKa, uKd, uKs, uAlpha, uViewPos, uAttOn;
-let uTex;
+let uTex, uBumpStrength;
 let uLightPos1, uLightPos2, uLightColor1, uLightColor2;
 
 const material_uniforms = {
@@ -67,6 +67,7 @@ function init_shader_program() {
     uAttOn = gl.getUniformLocation(program, "uAttBool")
 
     uTex = gl.getUniformLocation(program, "uTex");
+    uBumpStrength = gl.getUniformLocation(program, "uBumpStrength");
     
     } catch (e) { 
         console.error(e); 
@@ -77,7 +78,7 @@ init_shader_program();
 
 // Mouse and keyboard interactions
 let mouseDown = false, lastX, lastY, rotX = 0.5, rotY = 0.0;
-let camX = 0, camY = -4, camZ = -8;
+let camX = 0, camY = 0, camZ = -6;
 
 canvas.addEventListener('mousedown', e => {
     mouseDown = true;
@@ -125,13 +126,16 @@ let proj = perspective(fov, aspect, zNear, zFar);
 
 const rocky_terrain_img = "./textures/rocky_terrain_tex.png";
 const river_pebbles_img = "./textures/river_pebbles_tex.png";
+const riverbed_rock_img = "./textures/riverbed_rock_tex.png";
+const mud_cracked_img   = "./textures/mud_cracked_tex.png";
 
 // shape setup
-const cube_ground = makeShape(gl, program, cube_data, rocky_terrain_img, ground_material);
-const cube_ground2 = makeShape(gl, program, cube_data, river_pebbles_img, wood_material);
-// const cube_straw = makeShape(gl, program, cube_data, rocky_terrain_img, hay_material);
+const cube_ground_type1 = makeShape(gl, program, cube_data, rocky_terrain_img, metal_gray_material);
+const cube_ground_type2 = makeShape(gl, program, cube_data, river_pebbles_img, candy_material);
+const cube_ground_type3 = makeShape(gl, program, cube_data, riverbed_rock_img, ground_material);
+const cube_ground_type4 = makeShape(gl, program, cube_data, mud_cracked_img, hay_material);
 
-// const cylinder_metal_gray = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_gray_material);
+const cylinder_metal_gray = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), mud_cracked_img, metal_gray_material);
 // const cylinder_metal_red = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_red_material);
 // const cylinder_metal_orange = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_orange_material);
 
@@ -140,10 +144,12 @@ const sphere_ball = makeShape(gl, program, () => sphere_data(30, 30, 1.0), rocky
 
 // Hierarchical model setup
 let figure = [];
-let num_segments = 2;
+let num_segments = 4;
 let model = new Model(num_segments,  mat4Identity(), figure);
 
 model.add_children(0, 1);
+model.add_children(0, 2);
+model.add_children(0, 3);
 
 // lighting setup
 let light_world_position1 = [5, 0, 5];
@@ -165,6 +171,17 @@ let spinrate = 0.1;
 //   spinrate_value.textContent = spinrate.toFixed(2);
 // })
 
+let bumpStrength = 100.0;
+
+const bs_slider = document.getElementById("bumpStrengthSlider");
+const bs_val = document.getElementById("bumpStrengthValue");
+
+bs_slider.addEventListener("input", () => {
+  bumpStrength = parseFloat(bs_slider.value);
+  bs_val.textContent = bumpStrength.toFixed(2);
+  console.log(bumpStrength)
+});
+
 let oscillationrate = 1.0;
 
 // const oscillationrate_silder = document.getElementById("oscillationSlider");
@@ -178,7 +195,7 @@ let oscillationrate = 1.0;
 const lightintensity_slider = document.getElementById("lightIntensitySlider");
 const lightintensity_value = document.getElementById("lightIntensityValue");
 
-let ambient_coeff = 0.3;
+let ambient_coeff = 0.5;
 
 lightintensity_slider.addEventListener("input", () => {
   ambient_coeff = parseFloat(lightintensity_slider.value);
@@ -260,13 +277,13 @@ function render() {
     let model_view_matrix = mat4Identity();
     
     // view transformations
-    model_view_matrix = multiplyMat4(model_view_matrix, shape_rotation);
+    // model_view_matrix = multiplyMat4(model_view_matrix, shape_rotation);
     // model_view_matrix = multiplyMat4(model_view_matrix, lookDown);
     model_view_matrix = mat4Translate(model_view_matrix, [camX, camY, camZ]);
 
 
     let model_transformation_matrix = mat4Identity();
-    // model_transformation_matrix = multiplyMat4(model_transformation_matrix, shape_rotation);
+    model_transformation_matrix = multiplyMat4(model_transformation_matrix, shape_rotation);
 
     //delta time in ms
     let current_time = Date.now();
@@ -289,6 +306,7 @@ function render() {
     gl.uniform3fv(uViewPos, view_direction);
     gl.uniform1f(uAttOn, attButton);
     gl.uniform1f(material_uniforms.uKa, ambient_coeff);
+    gl.uniform1f(uBumpStrength, bumpStrength);
 
     //set time in seconds
     gl.uniform1f(timeLoc, elapsed_time);
@@ -298,7 +316,7 @@ function render() {
     
     // if (animationButton) {
     model.update_dynamic_params(elapsed_time, delta_time, spinrate, oscillationrate);
-    model.update_node_transform(0);
+    // model.update_node_transform(0);
     // }
     
     model.walk(0);

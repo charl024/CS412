@@ -14,9 +14,9 @@ const wood_material = {
 };
 
 const hay_material = {   
-    Kd: 0.2,
+    Kd: 0.3,
     Ks: 0.1,
-    alpha: 10.0,
+    alpha: 1.0,
     color: colorconvert(218,197,134)
 };
 

@@ -10,6 +10,7 @@ class Shape {
         this.colors     = new Float32Array(geometry.colors);
         this.normals    = new Float32Array(geometry.normals);
         this.tex_coords = new Float32Array(geometry.tex_coords);
+        this.tangents   = new Float32Array(geometry.tangents);
 
         this.is_tex_loaded = false;
 
@@ -17,6 +18,7 @@ class Shape {
             console.log("tex img src valid")
             this.texture = gl.createTexture();
             this.tex_img_src = tex_img_src;
+            this.load_texture_src()
         }
 
         this.material = {
@@ -28,7 +30,7 @@ class Shape {
 
         this.segment_function
 
-        this.buffer = new ShapeBuffer(gl, program, this.vertices, this.indices, this.colors, this.normals, this.tex_coords);
+        this.buffer = new ShapeBuffer(gl, program, this.vertices, this.indices, this.colors, this.normals, this.tex_coords, this.tangents);
     }
 
     load_texture_src() {
@@ -48,11 +50,6 @@ class Shape {
         const gl = this.gl;
 
         gl.useProgram(this.program);
-
-        if (this.tex_img_src && !this.is_tex_loaded) {
-            this.load_texture_src();
-            this.is_tex_loaded = true;
-        }
 
         if (this.texture) {
             let unit = 0;

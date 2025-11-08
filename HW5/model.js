@@ -90,19 +90,6 @@ class Model {
 
                 node.transform = multiplyMat4(node.itransform, delta);
                 break;
-
-            case 14:
-                let amplitude = 0.3;
-                let frequency = 1.0 * this.oscillationrate;
-                let y_offset = amplitude * Math.sin(2 * Math.PI * frequency * this.dynamic_angle);
-                let x_offset = amplitude * Math.cos(2 * Math.PI * frequency * this.dynamic_angle);
-
-                delta = mat4Identity();
-                
-                delta = mat4Translate(delta, [x_offset, y_offset, 0]);
-
-                node.transform = multiplyMat4(node.itransform, delta);
-                break;
                 
             default:
                 break;
@@ -135,8 +122,8 @@ class Model {
         
         switch (idx) {
             case 0:
-                base_shape = cube_ground;
-                initial_transform = mat4Translate(initial_transform, [0.0, 0.0, 0.0]);
+                base_shape = sphere_ball;
+                initial_transform = mat4Translate(initial_transform, [-1.0, -1.0, 0.0]);
                 this.figure[idx] = this.create_node(idx, initial_transform, 
                     () => {
                         let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
@@ -145,8 +132,28 @@ class Model {
                     null, base_shape);
                 break;
             case 1:
-                base_shape = cube_ground2;
+                base_shape = cylinder_metal_gray;
                 initial_transform = mat4Translate(initial_transform, [2.0, 0.0, 0.0]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);
+                break;
+            case 2:
+                base_shape = cube_ground_type3;
+                initial_transform = mat4Translate(initial_transform, [2.0, 2.0, 0.0]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);
+                break;
+            case 3:
+                base_shape = cube_ground_type4;
+                initial_transform = mat4Translate(initial_transform, [0.0, 2.0, 0.0]);
                 this.figure[idx] = this.create_node(idx, initial_transform, 
                     () => {
                         let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
