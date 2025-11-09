@@ -31,7 +31,7 @@ const fragment_shader_src = document.getElementById("fragment-shader").textConte
 
 let program, posLoc, colorLoc, uMVM, uPM, uMTM;
 let uKa, uKd, uKs, uAlpha, uViewPos, uAttOn;
-let uTex, uBumpStrength;
+let uTex, uBumpStrength, uBumpOn;
 let uLightPos1, uLightPos2, uLightColor1, uLightColor2;
 
 const material_uniforms = {
@@ -39,6 +39,7 @@ const material_uniforms = {
     uKd, 
     uKs, 
     uAlpha,
+    uBumpOn
 };
 
 function init_shader_program() {
@@ -68,7 +69,8 @@ function init_shader_program() {
 
     uTex = gl.getUniformLocation(program, "uTex");
     uBumpStrength = gl.getUniformLocation(program, "uBumpStrength");
-    
+    material_uniforms.uBumpOn = gl.getUniformLocation(program, "uBumpOn");
+
     } catch (e) { 
         console.error(e); 
     }
@@ -77,7 +79,7 @@ function init_shader_program() {
 init_shader_program();
 
 // Mouse and keyboard interactions
-let mouseDown = false, lastX, lastY, rotX = 0.5, rotY = 0.0;
+let mouseDown = false, lastX, lastY, rotX = 0.1, rotY = 0.0;
 let camX = 0, camY = 0, camZ = -6;
 
 canvas.addEventListener('mousedown', e => {
@@ -123,37 +125,74 @@ let f = 1 / Math.tan(fov / 2);
 
 let proj = perspective(fov, aspect, zNear, zFar);
 
-
+// texture setup
 const rocky_terrain_img = "./textures/rocky_terrain_tex.png";
 const river_pebbles_img = "./textures/river_pebbles_tex.png";
 const riverbed_rock_img = "./textures/riverbed_rock_tex.png";
 const mud_cracked_img   = "./textures/mud_cracked_tex.png";
+const concrete_floor_img = "./textures/concrete_floor_tex.jpg";
+const decrepit_wallpaper_img = "./textures/decrepit_wallpaper_tex.jpg";
+const ceiling_interior_img = "./textures/ceiling_interior_tex.jpg";
+const worn_planks_img = "./textures/worn_planks_tex.jpg";
+const black_painted_planks_img = "./textures/black_painted_planks_tex.jpg";
+const wood_table_img = "./textures/wood_table_tex.jpg";
+const fabric_black_img = "./textures/fabric_black_tex.jpg";
+
+const tv_static_vid = "./textures/tv_static.webm";
+
+const video = document.createElement("video");
+video.src = tv_static_vid;
+video.autoplay = true;
+video.loop = true;
+video.muted = true;
+video.playsInline = true;
+video.play();
 
 // shape setup
-const cube_ground_type1 = makeShape(gl, program, cube_data, rocky_terrain_img, metal_gray_material);
-const cube_ground_type2 = makeShape(gl, program, cube_data, river_pebbles_img, candy_material);
-const cube_ground_type3 = makeShape(gl, program, cube_data, riverbed_rock_img, ground_material);
-const cube_ground_type4 = makeShape(gl, program, cube_data, mud_cracked_img, hay_material);
+const cube_ground_type1 = makeShape(gl, program, cube_data, concrete_floor_img, ground_material);
+const cube_wall_type1 = makeShape(gl, program, cube_data, decrepit_wallpaper_img, wallpaper_old_material);
+const cube_ceil_type1 = makeShape(gl, program, cube_data, worn_planks_img, ground_material);
+const cube_table_black = makeShape(gl, program, cube_data, black_painted_planks_img, ground_material);
+const cube_fabric_black = makeShape(gl, program, cube_data, fabric_black_img, black_plastic_material);
 
-const cylinder_metal_gray = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), mud_cracked_img, metal_gray_material);
-// const cylinder_metal_red = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_red_material);
+const cube_tv_screen = makeShape(gl, program, cube_data, video, tv_screen_material);
+
+const cone_table_leg = makeShape(gl, program, () => cone_data(30, 30, 1.0, 1.0), black_painted_planks_img, wood_material);
 // const cylinder_metal_orange = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_orange_material);
 
 // const cone_topping = makeShape(gl, program, () => cone_data(30, 30, 1.0, 1.0), candy_material);
-const sphere_ball = makeShape(gl, program, () => sphere_data(30, 30, 1.0), rocky_terrain_img, wood_material);
+// const sphere_ball = makeShape(gl, program, () => sphere_data(30, 30, 1.0), rocky_terrain_img, wood_material);
 
 // Hierarchical model setup
 let figure = [];
-let num_segments = 4;
+let num_segments = 17;
 let model = new Model(num_segments,  mat4Identity(), figure);
 
 model.add_children(0, 1);
 model.add_children(0, 2);
 model.add_children(0, 3);
+model.add_children(0, 4);
+model.add_children(0, 5);
+model.add_children(0, 6);
+model.add_children(6, 7);
+model.add_children(6, 8);
+model.add_children(6, 9);
+model.add_children(6, 10);
+model.add_children(6, 11);
+model.add_children(11, 12);
+model.add_children(11, 13);
+model.add_children(11, 14);
+model.add_children(11, 15);
+model.add_children(11, 16);
+// model.add_children(0, 17);
+
+
+
+
 
 // lighting setup
-let light_world_position1 = [5, 0, 5];
-let light_world_position2 = [-5, 0, -5];
+let light_world_position1 = [0, 3, -6];
+let light_world_position2 = [0, 3, -6];
 
 let light_color1 = [1.0, 1.0, 1.0];
 let light_color2 = [1.0, 1.0, 1.0];
@@ -179,7 +218,6 @@ const bs_val = document.getElementById("bumpStrengthValue");
 bs_slider.addEventListener("input", () => {
   bumpStrength = parseFloat(bs_slider.value);
   bs_val.textContent = bumpStrength.toFixed(2);
-  console.log(bumpStrength)
 });
 
 let oscillationrate = 1.0;
@@ -243,18 +281,6 @@ function update_lights_pos(angle) {
 const rocky_terrain_tex = new Image();
 rocky_terrain_tex.src = "./textures/river_pebbles_tex.png";
 
-// const texture = gl.createTexture();
-// rocky_terrain_tex.onload = () => {
-//     gl.bindTexture(gl.TEXTURE_2D, texture);
-//     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, rocky_terrain_tex);
-//     gl.generateMipmap(gl.TEXTURE_2D);
-//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-
-    
-// }
-
 
 // Animation loop
 let last_time = Date.now();
@@ -277,13 +303,12 @@ function render() {
     let model_view_matrix = mat4Identity();
     
     // view transformations
-    // model_view_matrix = multiplyMat4(model_view_matrix, shape_rotation);
-    // model_view_matrix = multiplyMat4(model_view_matrix, lookDown);
+    model_view_matrix = multiplyMat4(model_view_matrix, shape_rotation);
     model_view_matrix = mat4Translate(model_view_matrix, [camX, camY, camZ]);
 
 
     let model_transformation_matrix = mat4Identity();
-    model_transformation_matrix = multiplyMat4(model_transformation_matrix, shape_rotation);
+    // model_transformation_matrix = multiplyMat4(model_transformation_matrix, shape_rotation);
 
     //delta time in ms
     let current_time = Date.now();

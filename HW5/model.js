@@ -122,38 +122,184 @@ class Model {
         
         switch (idx) {
             case 0:
-                base_shape = sphere_ball;
-                initial_transform = mat4Translate(initial_transform, [-1.0, -1.0, 0.0]);
+                base_shape = cube_ground_type1;
+                initial_transform = mat4Translate(initial_transform, [0.0, -3.0, 0.0]);
                 this.figure[idx] = this.create_node(idx, initial_transform, 
                     () => {
-                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [8.0, 0.5, 8.0]);
                         gl.uniformMatrix4fv(uMTM, false, segment_mat);
                     }, 
                     null, base_shape);
                 break;
             case 1:
-                base_shape = cylinder_metal_gray;
-                initial_transform = mat4Translate(initial_transform, [2.0, 0.0, 0.0]);
+                base_shape = cube_wall_type1;
+                initial_transform = mat4Translate(initial_transform, [8.5, 3.5, 0.0]);
                 this.figure[idx] = this.create_node(idx, initial_transform, 
                     () => {
-                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.5, 3.0, 8.0]);
                         gl.uniformMatrix4fv(uMTM, false, segment_mat);
                     }, 
                     null, base_shape);
                 break;
             case 2:
-                base_shape = cube_ground_type3;
-                initial_transform = mat4Translate(initial_transform, [2.0, 2.0, 0.0]);
+                base_shape = cube_wall_type1;
+                initial_transform = mat4Translate(initial_transform, [-8.5, 3.5, 0.0]);
                 this.figure[idx] = this.create_node(idx, initial_transform, 
                     () => {
-                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.5, 3.0, 8.0]);
                         gl.uniformMatrix4fv(uMTM, false, segment_mat);
                     }, 
                     null, base_shape);
                 break;
             case 3:
-                base_shape = cube_ground_type4;
-                initial_transform = mat4Translate(initial_transform, [0.0, 2.0, 0.0]);
+                base_shape = cube_wall_type1;
+                initial_transform = mat4Translate(initial_transform, [0.0, 3.5, 8.5]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [8.0, 3.0, 0.5]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);
+                break;
+            case 4:
+                base_shape = cube_wall_type1;
+                initial_transform = mat4Translate(initial_transform, [0.0, 3.5, -8.5]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [8.0, 3.0, 0.5]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);
+                break;
+            case 5:
+                base_shape = cube_ceil_type1;
+                initial_transform = mat4Translate(initial_transform, [0.0, 7.0, 0.0]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [8.0, 0.5, 8.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 6:
+                base_shape = cube_table_black;
+                initial_transform = mat4Translate(initial_transform, [0.0, 1.5, -6.0]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [3.0, 0.1, 1.5]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 7:
+                base_shape = cone_table_leg;
+                initial_transform = mat4Translate(initial_transform, [2.7, -1.2, 1.2]);
+                initial_transform = mat4RotateX(initial_transform, -Math.PI/2);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.2, 0.2, 1.2]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 8:
+                base_shape = cone_table_leg;
+                initial_transform = mat4Translate(initial_transform, [-2.7, -1.2, 1.2]);
+                initial_transform = mat4RotateX(initial_transform, -Math.PI/2);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.2, 0.2, 1.2]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 9:
+                base_shape = cone_table_leg;
+                initial_transform = mat4Translate(initial_transform, [2.7, -1.2, -1.2]);
+                initial_transform = mat4RotateX(initial_transform, -Math.PI/2);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.2, 0.2, 1.2]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 10:
+                base_shape = cone_table_leg;
+                initial_transform = mat4Translate(initial_transform, [-2.7, -1.2, -1.2]);
+                initial_transform = mat4RotateX(initial_transform, -Math.PI/2);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.2, 0.2, 1.2]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 11:
+                base_shape = cube_fabric_black;
+                initial_transform = mat4Translate(initial_transform, [0.0, 0.2, 0.0]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 0.2, 1.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 12:
+                base_shape = cube_fabric_black;
+                initial_transform = mat4Translate(initial_transform, [-1.1, 0.8, 0.0]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.1, 1.0, 1.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 13:
+                base_shape = cube_fabric_black;
+                initial_transform = mat4Translate(initial_transform, [1.1, 0.8, 0.0]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.1, 1.0, 1.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 14:
+                base_shape = cube_fabric_black;
+                initial_transform = mat4Translate(initial_transform, [0.0, 1.7, 0.0]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 0.1, 1.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);                    
+                break;
+            case 15:
+                base_shape = cube_fabric_black;
+                initial_transform = mat4Translate(initial_transform, [0.0, 0.8, -0.9]);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 0.1]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);
+                break;
+            case 16:
+                base_shape = cube_tv_screen;
+                initial_transform = mat4Translate(initial_transform, [0.0, 0.8, 0.8]);
+                initial_transform = mat4RotateX(initial_transform, Math.PI);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [0.9, 0.9, 0.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);
+                break;
+            case 17:
+                base_shape = cube_tv_screen;
+                initial_transform = mat4Translate(initial_transform, [0.0, 3.0, -6.0]);
+                initial_transform = mat4RotateX(initial_transform, Math.PI);
                 this.figure[idx] = this.create_node(idx, initial_transform, 
                     () => {
                         let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);

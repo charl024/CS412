@@ -1,7 +1,7 @@
 
 
 class Shape {
-    constructor(gl, program, geometry, tex_img_src, material = {}) {
+    constructor(gl, program, geometry, tex_src, material = {}) {
         this.gl = gl;
         this.program = program;
 
@@ -12,25 +12,34 @@ class Shape {
         this.tex_coords = new Float32Array(geometry.tex_coords);
         this.tangents   = new Float32Array(geometry.tangents);
 
-        this.is_tex_loaded = false;
-
-        if (tex_img_src) {
-            console.log("tex img src valid")
-            this.texture = gl.createTexture();
-            this.tex_img_src = tex_img_src;
-            this.load_texture_src()
-        }
-
         this.material = {
+            Ka: material.Ka ?? 0.3,
             Kd: material.Kd ?? 0.5,
             Ks: material.Ks ?? 0.5,
             alpha: material.alpha ?? 10.0,
-            color: material.color ?? [0.5, 0.5, 0.5]
+            color: material.color ?? [0.5, 0.5, 0.5],
+            bumpOn: material.bumpOn ?? false
         };
 
-        this.segment_function
+        this.buffer = new ShapeBuffer(gl, program, 
+            this.vertices, this.indices, 
+            this.colors, this.normals, 
+            this.tex_coords, this.tangents
+        );
 
-        this.buffer = new ShapeBuffer(gl, program, this.vertices, this.indices, this.colors, this.normals, this.tex_coords, this.tangents);
+        this.texture = gl.createTexture();
+        this.tex_img_src = tex_src;
+        this.isVideo = false;
+        this.video = null;
+
+        if (typeof tex_src === "string") {
+            this.load_texture_src(tex_src);
+        } 
+        else if (tex_src instanceof HTMLVideoElement) {
+            this.video = tex_src;
+            this.isVideo = true;
+            this.init_video_texture();
+        }
     }
 
     load_texture_src() {
@@ -46,21 +55,40 @@ class Shape {
         }
     }
 
+    init_video_texture() {
+        const gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    }
+
+    update_video_frame() {
+        const gl = this.gl;
+        if (!this.isVideo) return;
+        if (this.video.readyState < 2) return;
+
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.video);
+    }
+
     draw(uniforms) {
         const gl = this.gl;
 
+        this.update_video_frame();
+
         gl.useProgram(this.program);
 
-        if (this.texture) {
-            let unit = 0;
-            gl.activeTexture(gl.TEXTURE0 + unit); 
-            gl.bindTexture(gl.TEXTURE_2D, this.texture);
-            gl.uniform1i(gl.getUniformLocation(this.program, "uTex"), unit);
-        }
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.uniform1i(gl.getUniformLocation(this.program, "uTex"), 0);
 
+        gl.uniform1f(uniforms.uKa, this.material.Ka);
         gl.uniform1f(uniforms.uKd, this.material.Kd);
         gl.uniform1f(uniforms.uKs, this.material.Ks);
         gl.uniform1f(uniforms.uAlpha, this.material.alpha);
+        gl.uniform1f(uniforms.uBumpOn, this.material.bumpOn);
 
         this.buffer.render();
     }

@@ -169,11 +169,13 @@ function cone_data(u_steps, v_steps, r, h) {
 	const inverse_hyp = 1/Math.sqrt(h*h + r*r);
 
 	for (let i = 0; i <= v_steps; i++) {
-		const u = i / v_steps;
-		const z = u * h;
-		const radius = r * u;
+		const v = i / v_steps;
+		const z = v * h;
+		const radius = r * v;
 
 		for (let j = 0; j <= u_steps; j++) {
+			const u = j / u_steps;
+
 			const theta = j * 2 * Math.PI / u_steps;
 			const c = Math.cos(theta);
 			const s = Math.sin(theta);
@@ -184,7 +186,7 @@ function cone_data(u_steps, v_steps, r, h) {
 
 			normals.push(h * c * inverse_hyp, h * s * inverse_hyp, r * inverse_hyp);
 
-			tex_coords.push(v, u);
+			tex_coords.push(u, v);
 		}
 	}
 
@@ -220,11 +222,14 @@ function cone_data(u_steps, v_steps, r, h) {
 		indices.push(base_idx, k1, k2);
 	}
 
+	let tangents = compute_tangents(vertices, tex_coords, indices);
+
 	return {
 		vertices: new Float32Array(vertices),
 		indices: new Uint16Array(indices),
 		normals: new Float32Array(normals),
-		tex_coords: new Float32Array(tex_coords)
+		tex_coords: new Float32Array(tex_coords),
+		tangents: new Float32Array(tangents)
 	};
 };
 
@@ -290,6 +295,7 @@ function cylinder_data(u_steps, v_steps, r, h) {
 	let bottom_center_idx = vertices.length / 3;
 	vertices.push(0, 0, 0);
 	normals.push(0, -1, 0);
+	tex_coords.push(0.5, 0.5);
 
 	let bottom_ring_start = vertices.length / 3;
 
@@ -310,11 +316,14 @@ function cylinder_data(u_steps, v_steps, r, h) {
 		indices.push(bottom_center_idx, k1, k2);
 	}
 
+	let tangents = compute_tangents(vertices, tex_coords, indices);
+
 	return {
 		vertices: new Float32Array(vertices),
 		indices:  new Uint16Array(indices),
 		normals:  new Float32Array(normals),
-		tex_coords: new Float32Array(tex_coords)
+		tex_coords: new Float32Array(tex_coords),
+		tangents: new Float32Array(tangents)
 	};
 }
 

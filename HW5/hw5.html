@@ -217,7 +217,7 @@ uniform vec3 uViewPos;
 uniform sampler2D uTex;
 uniform float uBumpStrength;
 
-uniform bool uAttBool;
+uniform bool uBumpOn;
 
 out vec4 fragColor;
 
@@ -248,25 +248,22 @@ vec3 compute_light(vec3 light_pos, vec3 light_color, vec3 normal) {
 
   vec3 ambient = uKa * light_color;
 
-  float d = length(light_pos - vPosition);
-  float f_att = 1.0 / (1.0 + 0.09*d + 0.032*d*d);
-
-  if (uAttBool) {
-    return ambient + f_att*(diffuse + specular);
-  } else {
-    return ambient + diffuse + specular;
-  }
+  return ambient + diffuse + specular;
 }
 
 void main() {
   vec4 tex_color = texture(uTex, vTexCoord);
 
-  vec3 vBitangent = normalize(cross(vNormal, vTangent));
-  mat3 TBN = mat3(vTangent, vBitangent, vNormal);
+  vec3 normal;
 
-  vec3 bumpNormal = compute_bump_normal(uTex, vTexCoord);
-
-  vec3 normal = normalize(TBN * bumpNormal);
+  if (uBumpOn) {
+    vec3 vBitangent = normalize(cross(vNormal, vTangent));
+    mat3 TBN = mat3(vTangent, vBitangent, vNormal);
+    vec3 bumpNormal = compute_bump_normal(uTex, vTexCoord);
+    normal = normalize(TBN * bumpNormal);
+  } else {
+    normal = vNormal;
+  }
 
   vec3 light1 = compute_light(vLightPos1, uLightColor1, normal);
   vec3 light2 = compute_light(vLightPos2, uLightColor2, normal);
