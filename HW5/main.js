@@ -80,7 +80,7 @@ init_shader_program();
 
 // Mouse and keyboard interactions
 let mouseDown = false, lastX, lastY, rotX = 0.1, rotY = 0.0;
-let camX = 0, camY = 0, camZ = -6;
+let camX = 0, camY = 0, camZ = -4.5;
 
 canvas.addEventListener('mousedown', e => {
     mouseDown = true;
@@ -230,21 +230,21 @@ let oscillationrate = 1.0;
 //   oscillationrate_value.textContent = oscillationrate.toFixed(2);
 // });
 
-const lightintensity_slider = document.getElementById("lightIntensitySlider");
-const lightintensity_value = document.getElementById("lightIntensityValue");
+// const lightintensity_slider = document.getElementById("lightIntensitySlider");
+// const lightintensity_value = document.getElementById("lightIntensityValue");
 
-let ambient_coeff = 0.5;
+// let ambient_coeff = 0.5;
 
-lightintensity_slider.addEventListener("input", () => {
-  ambient_coeff = parseFloat(lightintensity_slider.value);
-  lightintensity_value.textContent = ambient_coeff.toFixed(2);
-});
+// lightintensity_slider.addEventListener("input", () => {
+//   ambient_coeff = parseFloat(lightintensity_slider.value);
+//   lightintensity_value.textContent = ambient_coeff.toFixed(2);
+// });
 
-let attButton = false;
+// let attButton = false;
 
-document.getElementById("AttOnButton").addEventListener("click", () => {
-    attButton = !attButton;
-});
+// document.getElementById("AttOnButton").addEventListener("click", () => {
+//     attButton = !attButton;
+// });
 
 // let animationButton = false;
 
@@ -252,17 +252,17 @@ document.getElementById("AttOnButton").addEventListener("click", () => {
 //     animationButton = !animationButton;
 // });
 
-let shadingButton = false;
+// let shadingButton = false;
 
-document.getElementById("ShadingButton").addEventListener("click", () => {
-    shadingButton = !shadingButton;
-});
+// document.getElementById("ShadingButton").addEventListener("click", () => {
+//     shadingButton = !shadingButton;
+// });
 
 let temperatureLights = false;
 
 document.getElementById("TLButton").addEventListener("click", () => {
     temperatureLights = !temperatureLights;
-});
+}); 
 
 function update_lights_pos(angle) {
     light_world_position1 = [5 * Math.cos(angle), 5 * Math.sin(angle), 5];
@@ -329,8 +329,8 @@ function render() {
     gl.uniform3fv(uLightColor2, light_color2);
 
     gl.uniform3fv(uViewPos, view_direction);
-    gl.uniform1f(uAttOn, attButton);
-    gl.uniform1f(material_uniforms.uKa, ambient_coeff);
+    // gl.uniform1f(uAttOn, attButton);
+    // gl.uniform1f(material_uniforms.uKa, ambient_coeff);
     gl.uniform1f(uBumpStrength, bumpStrength);
 
     //set time in seconds
