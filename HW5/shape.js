@@ -13,7 +13,7 @@ class Shape {
         this.tangents   = new Float32Array(geometry.tangents);
 
         this.material = {
-            Ka: material.Ka ?? 0.3,
+            Ka: material.Ka ?? 0.2,
             Kd: material.Kd ?? 0.5,
             Ks: material.Ks ?? 0.5,
             alpha: material.alpha ?? 10.0,
@@ -38,13 +38,13 @@ class Shape {
         else if (tex_src instanceof HTMLVideoElement) {
             this.video = tex_src;
             this.isVideo = true;
-            this.init_video_texture();
+            this.init_video_texture(tex_src);
         }
     }
 
-    load_texture_src() {
+    load_texture_src(tex_src) {
         const tex_img = new Image();
-        tex_img.src = this.tex_img_src;
+        tex_img.src = tex_src;
         tex_img.onload = () => {
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tex_img);
@@ -55,8 +55,9 @@ class Shape {
         }
     }
 
-    init_video_texture() {
+    init_video_texture(tex_src) {
         const gl = this.gl;
+        this.video = tex_src;
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);

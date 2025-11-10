@@ -80,7 +80,7 @@ init_shader_program();
 
 // Mouse and keyboard interactions
 let mouseDown = false, lastX, lastY, rotX = 0.1, rotY = 0.0;
-let camX = 0, camY = 0, camZ = -4.5;
+let camX = 0, camY = 0, camZ = -5;
 
 canvas.addEventListener('mousedown', e => {
     mouseDown = true;
@@ -120,7 +120,7 @@ function update_camera(dt) {
 }
 
 // Projection matrix
-let fov = Math.PI / 4, aspect = canvas.width / canvas.height, zNear = 0.1, zFar = 100;
+let fov = Math.PI / 3, aspect = canvas.width / canvas.height, zNear = 0.1, zFar = 100;
 let f = 1 / Math.tan(fov / 2);
 
 let proj = perspective(fov, aspect, zNear, zFar);
@@ -137,16 +137,54 @@ const worn_planks_img = "./textures/worn_planks_tex.jpg";
 const black_painted_planks_img = "./textures/black_painted_planks_tex.jpg";
 const wood_table_img = "./textures/wood_table_tex.jpg";
 const fabric_black_img = "./textures/fabric_black_tex.jpg";
+const rusty_metal_img_type1 = "./textures/rusty_metal1_tex.jpg";
+const rusty_metal_img_type2 = "./textures/rusty_metal2_tex.jpg";
 
 const tv_static_vid = "./textures/tv_static.webm";
+const tv_channel1_vid = "./textures/tv_channel_1.webm";
+const tv_channel2_vid = "./textures/tv_channel_2.webm";
+const tv_channel3_vid = "./textures/tv_channel_3.webm";
+const tv_channel4_vid = "./textures/tv_channel_4.webm";
 
-const video = document.createElement("video");
-video.src = tv_static_vid;
-video.autoplay = true;
-video.loop = true;
-video.muted = true;
-video.playsInline = true;
-video.play();
+const tv_static = document.createElement("video");
+tv_static.src = tv_static_vid;
+tv_static.autoplay = true;
+tv_static.loop = true;
+tv_static.muted = true;
+tv_static.playsInline = true;
+tv_static.play();
+
+const tv_channel1 = document.createElement("video");
+tv_channel1.src = tv_channel1_vid;
+tv_channel1.autoplay = true;
+tv_channel1.loop = true;
+tv_channel1.muted = true;
+tv_channel1.playsInline = true;
+tv_channel1.play();
+
+const tv_channel2 = document.createElement("video");
+tv_channel2.src = tv_channel2_vid;
+tv_channel2.autoplay = true;
+tv_channel2.loop = true;
+tv_channel2.muted = true;
+tv_channel2.playsInline = true;
+tv_channel2.play();
+
+const tv_channel3 = document.createElement("video");
+tv_channel3.src = tv_channel3_vid;
+tv_channel3.autoplay = true;
+tv_channel3.loop = true;
+tv_channel3.muted = true;
+tv_channel3.playsInline = true;
+tv_channel3.play();
+
+const tv_channel4 = document.createElement("video");
+tv_channel4.src = tv_channel4_vid;
+tv_channel4.autoplay = true;
+tv_channel4.loop = true;
+tv_channel4.muted = true;
+tv_channel4.playsInline = true;
+tv_channel4.play();
 
 // shape setup
 const cube_ground_type1 = makeShape(gl, program, cube_data, concrete_floor_img, ground_material);
@@ -155,17 +193,16 @@ const cube_ceil_type1 = makeShape(gl, program, cube_data, worn_planks_img, groun
 const cube_table_black = makeShape(gl, program, cube_data, black_painted_planks_img, ground_material);
 const cube_fabric_black = makeShape(gl, program, cube_data, fabric_black_img, black_plastic_material);
 
-const cube_tv_screen = makeShape(gl, program, cube_data, video, tv_screen_material);
+let cube_tv_screen = makeShape(gl, program, cube_data, tv_static, tv_screen_material);
 
 const cone_table_leg = makeShape(gl, program, () => cone_data(30, 30, 1.0, 1.0), black_painted_planks_img, wood_material);
-// const cylinder_metal_orange = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), metal_orange_material);
+const cylinder_metal_rusty_type1 = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), rusty_metal_img_type1, metal_gray_material);
+const cylinder_metal_rusty_type2 = makeShape(gl, program, () => cylinder_data(30, 30, 1.0, 1.0), rusty_metal_img_type2, metal_gray_material);
 
-// const cone_topping = makeShape(gl, program, () => cone_data(30, 30, 1.0, 1.0), candy_material);
-// const sphere_ball = makeShape(gl, program, () => sphere_data(30, 30, 1.0), rocky_terrain_img, wood_material);
 
 // Hierarchical model setup
 let figure = [];
-let num_segments = 17;
+let num_segments = 19;
 let model = new Model(num_segments,  mat4Identity(), figure);
 
 model.add_children(0, 1);
@@ -184,18 +221,17 @@ model.add_children(11, 13);
 model.add_children(11, 14);
 model.add_children(11, 15);
 model.add_children(11, 16);
-// model.add_children(0, 17);
-
-
+model.add_children(0, 17);
+model.add_children(0, 18);
 
 
 
 // lighting setup
-let light_world_position1 = [0, 3, -6];
-let light_world_position2 = [0, 3, -6];
+let light_world_position1 = [0, 3, -5.75];
+let light_world_position2 = [0, 3, -6.25];
 
-let light_color1 = [1.0, 1.0, 1.0];
-let light_color2 = [1.0, 1.0, 1.0];
+let light_color1 = [0.7, 0.7, 0.7];
+let light_color2 = [0.7, 0.7, 0.7];
 
 let view_direction = [0, 0, 0];
 
@@ -252,11 +288,30 @@ let oscillationrate = 1.0;
 //     animationButton = !animationButton;
 // });
 
-// let shadingButton = false;
+let currentChannel = 0;
 
-// document.getElementById("ShadingButton").addEventListener("click", () => {
-//     shadingButton = !shadingButton;
-// });
+document.getElementById("ChangeChannelButton").addEventListener("click", () => {
+    currentChannel = (currentChannel + 1) % 5;
+    switch (currentChannel) {
+        case 0:
+            cube_tv_screen.init_video_texture(tv_static);
+            break;
+        case 1:
+            cube_tv_screen.init_video_texture(tv_channel1);
+            break;
+        case 2:
+            cube_tv_screen.init_video_texture(tv_channel2);
+            break;
+        case 3:
+            cube_tv_screen.init_video_texture(tv_channel3);
+            break;
+        case 4:
+            cube_tv_screen.init_video_texture(tv_channel4);
+            break;
+    }
+
+    model.figure[16].shape = cube_tv_screen;
+});
 
 let temperatureLights = false;
 
@@ -265,15 +320,15 @@ document.getElementById("TLButton").addEventListener("click", () => {
 }); 
 
 function update_lights_pos(angle) {
-    light_world_position1 = [5 * Math.cos(angle), 5 * Math.sin(angle), 5];
-    light_world_position2 = [-5 * Math.cos(angle), -5 * Math.sin(angle), -5];
+    // light_world_position1 = [5 * Math.cos(angle), 5 * Math.sin(angle), 5];
+    // light_world_position2 = [-5 * Math.cos(angle), -5 * Math.sin(angle), -5];
 
     if (temperatureLights) {
         light_color1 = [1.0, 0.6, 0.4];
         light_color2 = [0.4, 0.6, 1.0];
     } else {
-        light_color1 = [1.0, 1.0, 1.0];
-        light_color2 = [1.0, 1.0, 1.0];
+        light_color1 = [0.7, 0.7, 0.7];
+        light_color2 = [0.7, 0.7, 0.7];
     }
 }
 

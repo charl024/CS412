@@ -297,12 +297,22 @@ class Model {
                     null, base_shape);
                 break;
             case 17:
-                base_shape = cube_tv_screen;
-                initial_transform = mat4Translate(initial_transform, [0.0, 3.0, -6.0]);
-                initial_transform = mat4RotateX(initial_transform, Math.PI);
+                base_shape = cylinder_metal_rusty_type1;
+                initial_transform = mat4Translate(initial_transform, [-5.0, 0.0, -6]);
                 this.figure[idx] = this.create_node(idx, initial_transform, 
                     () => {
-                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 1.0, 1.0]);
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 3.0, 1.0]);
+                        gl.uniformMatrix4fv(uMTM, false, segment_mat);
+                    }, 
+                    null, base_shape);
+                break;
+            case 18:
+                base_shape = cylinder_metal_rusty_type2;
+                initial_transform = mat4Translate(initial_transform, [6.0, 1.4, -5.0]);
+                initial_transform = mat4RotateX(initial_transform, Math.PI/2);
+                this.figure[idx] = this.create_node(idx, initial_transform, 
+                    () => {
+                        let segment_mat = mat4Scale(this.model_transformation_matrix, [1.0, 3.0, 1.0]);
                         gl.uniformMatrix4fv(uMTM, false, segment_mat);
                     }, 
                     null, base_shape);
