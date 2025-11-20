@@ -225,7 +225,7 @@ out vec4 fragColor;
 
 vec3 compute_bump_normal(sampler2D tex, vec2 tex_coord) {
   float h = texture(tex, tex_coord).r;
-  float change = 1.0/1024.0;
+  float change = 1.0/(1024.0);
   float hu = texture(tex, tex_coord + vec2(change, 0.0)).r;
   float hv = texture(tex, tex_coord + vec2(0.0, change)).r;
 
