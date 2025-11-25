@@ -1,0 +1,3 @@
+[submodule "cg_project"]
+	path = cg_project
+	url = https://github.com/charl024/cg_project.git
