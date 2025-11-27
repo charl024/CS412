@@ -88,9 +88,19 @@
 
 <div class="controls-container">
     <div class="controls">
+
+        <label>
+            Sphere Material:
+            <select id="sphereTypeSelect">
+                <option value="0">Reflect + Refract</option>
+                <option value="1">Reflective Only</option>
+                <option value="2">Refractive Only</option>
+            </select>
+        </label>
+
         <label>
             Max Bounces: <span id="maxBouncesValue">4</span>
-            <input type="range" id="maxBouncesSlider" min="4" max="32" step="1" value="4">
+            <input type="range" id="maxBouncesSlider" min="8" max="32" step="1" value="8">
         </label>
 
         <label>
@@ -105,13 +115,14 @@
 
         <label>
             Sphere Rotation Radius: <span id="sphereRotRadValue">1.00</span>
-            <input type="range" id="sphereRotRadSlider" min="0.1" max="10.0" step="0.01" value="1.0">
+            <input type="range" id="sphereRotRadSlider" min="0.1" max="10.0" step="0.01" value="1.5">
         </label>
 
         <label>
             Sphere Rotation Speed: <span id="sphereRotSpeedValue">1.00</span>
             <input type="range" id="sphereRotSpeedSlider" min="0.1" max="10.0" step="0.01" value="1.0">
         </label>
+        
     </div>
 </div>
 
@@ -139,6 +150,8 @@
     uniform float u_yaw;
     uniform float u_pitch;
 
+    uniform int u_sphere_type;
+
     uniform float u_sphere_size;
     uniform float u_sphere_rot_rad;
     uniform float u_sphere_rot_speed;
@@ -149,6 +162,10 @@
     const int MATERIAL_DIFFUSE = 0;
     const int MATERIAL_REFLECTIVE = 1;
     const int MATERIAL_REFRACTIVE = 2;
+
+    const int SPHERE_BOTH = 0;
+    const int SPHERE_REFLECTIVE = 1;
+    const int SPHERE_REFRACTIVE = 2;
 
     const float eps = 1e-3;
 
@@ -265,17 +282,32 @@
 
         for (int i = 0; i < MAX_SPHERES; i++) {
             float j = float(i);
-            int type = MATERIAL_REFLECTIVE;
             vec3 color = vec3(0.9, 0.9, 0.9);
 
             float ref = 1.0;
             float refra = 1.0;
 
             if (i % 2 == 0) {
-                type = MATERIAL_REFRACTIVE;
                 color = vec3(0.9, 0.9, 0.9);
                 refra = 1.0 + (j / float(MAX_SPHERES));
             }
+
+            int type;
+
+            switch (u_sphere_type) {
+                case SPHERE_REFLECTIVE:
+                    type = MATERIAL_REFLECTIVE;
+                    break;
+
+                case SPHERE_REFRACTIVE:
+                    type = MATERIAL_REFRACTIVE;
+                    break;
+
+                default:
+                    if (i % 2 == 0) type = MATERIAL_REFRACTIVE;
+                    else type = MATERIAL_REFLECTIVE;
+            }
+
             spheres[i] = Sphere(
                 vec3(
                     u_sphere_rot_rad * a * sin(time * 1.3 * u_sphere_rot_speed + j),
@@ -680,11 +712,12 @@
         // vsEditor.onkeyup = initShaderProgram;
         // fsEditor.onkeyup = initShaderProgram;
 
-        let maxBounces = 4;
+        let maxBounces = 8;
         let ambientStrength = 0.25;
         let sphere_size = 0.3;
         let sphere_rot_rad = 3.0;
         let sphere_rot_speed = 1.0;
+        let sphere_type = 0;
 
         // UI Controls
         const maxBouncesSlider = document.getElementById("maxBouncesSlider");
@@ -696,10 +729,25 @@
         const sphereSizeSlider = document.getElementById("sphereSizeSlider");
         const sphereRotRadSlider = document.getElementById("sphereRotRadSlider");
         const sphereRotSpeedSlider = document.getElementById("sphereRotSpeedSlider");
+        const sphereTypeSelect = document.getElementById("sphereTypeSelect");
 
         const sphereSizeValue = document.getElementById("sphereSizeValue");
         const sphereRotRadValue = document.getElementById("sphereRotRadValue");
         const sphereRotSpeedValue = document.getElementById("sphereRotSpeedValue");
+
+        maxBounces = parseInt(maxBouncesSlider.value, 10);
+        ambientStrength = parseFloat(ambientStrengthSlider.value);
+        sphere_size = parseFloat(sphereSizeSlider.value);
+        sphere_rot_rad = parseFloat(sphereRotRadSlider.value);
+        sphere_rot_speed = parseFloat(sphereRotSpeedSlider.value);
+        sphere_type = parseInt(sphereTypeSelect.value, 10);
+
+        maxBouncesValue.textContent = maxBounces;
+        ambientStrengthValue.textContent = ambientStrength.toFixed(2);
+        sphereSizeValue.textContent = sphere_size.toFixed(2);
+        sphereRotRadValue.textContent = sphere_rot_rad.toFixed(2);
+        sphereRotSpeedValue.textContent = sphere_rot_speed.toFixed(2);
+        sphereTypeSelect.value = sphere_type.toString();
 
 
         maxBouncesSlider.oninput = () => {
@@ -725,6 +773,10 @@
         sphereRotSpeedSlider.oninput = () => {
             sphere_rot_speed = parseFloat(sphereRotSpeedSlider.value);
             sphereRotSpeedValue.textContent = sphere_rot_speed.toFixed(2);
+        };
+
+        sphereTypeSelect.oninput = () => {
+            sphere_type = parseInt(sphereTypeSelect.value, 10);
         };
 
         // Camera movement
@@ -788,6 +840,7 @@
         });
 
         let cam_pos_location, yaw_location, pitch_location;
+        let sphere_size_loc, sphere_rot_rad_loc, sphere_rot_speed_loc, sphere_type_loc;
         
         cam_pos_location = gl.getUniformLocation(program, "u_cam_pos");
         yaw_location = gl.getUniformLocation(program, "u_yaw");
@@ -796,6 +849,7 @@
         sphere_size_loc = gl.getUniformLocation(program, "u_sphere_size");
         sphere_rot_rad_loc = gl.getUniformLocation(program, "u_sphere_rot_rad");
         sphere_rot_speed_loc = gl.getUniformLocation(program, "u_sphere_rot_speed");
+        sphere_type_loc = gl.getUniformLocation(program, "u_sphere_type");
 
         let startTime = Date.now();
         function render() {
@@ -818,6 +872,7 @@
             gl.uniform1f(sphere_size_loc, sphere_size);
             gl.uniform1f(sphere_rot_rad_loc, sphere_rot_rad);
             gl.uniform1f(sphere_rot_speed_loc, sphere_rot_speed);
+            gl.uniform1i(sphere_type_loc, sphere_type);
 
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
